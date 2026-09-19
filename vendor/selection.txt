@@ -1,0 +1,39 @@
+# =============================================================================
+# vendor/selection.txt — files to vendor from an OAC source checkout.
+#
+# Each non-comment line is a path RELATIVE TO THE SOURCE `.opencode/` directory.
+# scripts/vendor-sync.sh copies them to vendor/oac/.opencode/<path> and records
+# them in vendor/oac/bundle.json.
+#
+# This is the driver-needed subset: the primary agents, the subagents the
+# spec-kit-driver delegates to, and the context files the driver references.
+#
+# NOTE: validated against the OAC source tree at snapshot time (v0.5.2,
+# 2026-09-19). Adjust here and re-run vendor-sync if a future source layout
+# differs.
+# =============================================================================
+
+# --- primary agents -----------------------------------------------------------
+agent/core/openagent.md
+agent/core/opencoder.md
+
+# --- code subagents -----------------------------------------------------------
+agent/subagents/code/coder-agent.md
+agent/subagents/code/build-agent.md
+agent/subagents/code/test-engineer.md
+agent/subagents/code/reviewer.md
+
+# --- core subagents -----------------------------------------------------------
+agent/subagents/core/batch-executor.md
+agent/subagents/core/contextscout.md
+agent/subagents/core/task-manager.md
+agent/subagents/core/externalscout.md
+agent/subagents/core/documentation.md
+
+# --- context: standards -------------------------------------------------------
+context/core/standards/code-quality.md
+context/core/standards/test-coverage.md
+
+# --- context: workflows -------------------------------------------------------
+context/core/workflows/task-delegation-basics.md
+context/core/workflows/task-delegation-specialists.md

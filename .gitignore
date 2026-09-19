@@ -1,0 +1,11 @@
+.DS_Store
+._*
+*~
+*.swp
+*.tmp
+.idea/
+.vscode/
+
+# Dogfood build output — regenerate with ./bootstrap.sh . --update [--no-spec-kit]
+.opencode/
+.sdd-toolbox/

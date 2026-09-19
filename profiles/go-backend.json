@@ -1,0 +1,30 @@
+{
+  "name": "go-backend",
+  "description": "Go backend SDD flow: minimal plus review/build subagents and go vet + race-test validation after each wave.",
+  "components": [
+    "agent:spec-kit-driver",
+    "command:sdd",
+    "context:spec-kit-navigation",
+    "context:spec-kit-workflow",
+    "context:spec-kit-artifacts",
+    "context:spec-kit-wave-execution",
+    "context:spec-kit-evidence",
+    "subagent:contextscout",
+    "subagent:externalscout",
+    "subagent:task-manager",
+    "subagent:coder-agent",
+    "subagent:batch-executor",
+    "subagent:test-engineer",
+    "subagent:documentation",
+    "context:code-quality",
+    "subagent:reviewer",
+    "subagent:build-agent",
+    "context:test-coverage"
+  ],
+  "settings": {
+    "wave_strategy": "auto",
+    "parallel_threshold": 5,
+    "validation": { "commands": ["go vet ./...", "go test -race -count=1 ./..."], "scope": "repo" },
+    "converge_loop": true
+  }
+}

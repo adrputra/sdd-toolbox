@@ -1,0 +1,91 @@
+{
+  "version": "0.1.0",
+  "schema_version": "2.0.0",
+  "components": {
+    "agents": [
+      {
+        "id": "spec-kit-driver",
+        "name": "Spec Kit Driver",
+        "type": "agent",
+        "path": "components/agent/core/spec-kit-driver.md",
+        "description": "Primary agent that orchestrates GitHub Spec Kit's SDD workflow with mandatory review gates, a pre-plan requirements-analysis pass, and dependency-ordered parallel wave execution.",
+        "category": "core",
+        "tags": ["sdd", "spec-kit", "driver", "orchestration", "waves"],
+        "version": "0.1.0"
+      }
+    ],
+    "subagents": [],
+    "commands": [
+      {
+        "id": "sdd",
+        "name": "SDD",
+        "type": "command",
+        "path": "components/command/sdd.md",
+        "description": "Entry command routing /sdd <request> to the spec-kit-driver agent.",
+        "category": "core",
+        "tags": ["sdd", "spec-kit", "entrypoint"],
+        "version": "0.1.0"
+      }
+    ],
+    "tools": [],
+    "contexts": [
+      {
+        "id": "spec-kit-navigation",
+        "name": "Spec Kit Driver Navigation",
+        "type": "context",
+        "path": "components/context/spec-kit/navigation.md",
+        "description": "Map of the driver context files, when to load each, and where the runtime config and Spec Kit artifacts live.",
+        "category": "spec-kit",
+        "tags": ["sdd", "spec-kit", "navigation"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "spec-kit-workflow",
+        "name": "Spec Kit Driver Workflow",
+        "type": "context",
+        "path": "components/context/spec-kit/workflow.md",
+        "description": "Full command sequence, gate protocol, requirements-analysis pass, and bug-fix flow for the spec-kit-driver.",
+        "category": "spec-kit",
+        "tags": ["sdd", "spec-kit", "workflow", "gates"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "spec-kit-artifacts",
+        "name": "Spec Kit Artifacts",
+        "type": "context",
+        "path": "components/context/spec-kit/artifacts.md",
+        "description": "Spec Kit on-disk layout (.specify/, specs/<###-feature>/) and feature-directory resolution via .specify/feature.json and SPECIFY_FEATURE_DIRECTORY.",
+        "category": "spec-kit",
+        "tags": ["sdd", "spec-kit", "artifacts"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "spec-kit-wave-execution",
+        "name": "Spec Kit Wave Execution",
+        "type": "context",
+        "path": "components/context/spec-kit/wave-execution.md",
+        "description": "Task-parsing rules, DAG/wave computation, sidecar schema, dispatch thresholds, live ticking, validation, stop rules, and converge re-planning.",
+        "category": "spec-kit",
+        "tags": ["sdd", "spec-kit", "waves", "execution"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "spec-kit-evidence",
+        "name": "Spec Kit Evidence Protocol",
+        "type": "context",
+        "path": "components/context/spec-kit/evidence.md",
+        "description": "Evidence rules: no completion claim without fresh command output, and the verdict format for bug-fix flows.",
+        "category": "spec-kit",
+        "tags": ["sdd", "spec-kit", "evidence", "verification"],
+        "version": "0.1.0"
+      }
+    ]
+  },
+  "extensions": {
+    "bug": {
+      "name": "bug",
+      "add_command": "specify extension add bug",
+      "description": "Opt-in Spec Kit bug-fix extension: assess -> fix -> test flow with verified/partial/failed verdicts."
+    }
+  }
+}
