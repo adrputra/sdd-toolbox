@@ -9,8 +9,8 @@
 #
 # Stage flow (design §5.2): parse args -> (wizard | resolved plan) ->
 #   check_prereqs -> [spec_kit_ensure -> spec_kit_init -> extensions] ->
-#   overlay (install | update | reinstall) -> write_config ->
-#   build_managed_files_json -> write_manifest_file (manifest LAST) -> summary.
+#   overlay (install | update | reinstall) -> ensure_opencode_json ->
+#   write_config -> build_managed_files_json -> write_manifest_file (manifest LAST) -> summary.
 #
 # Exit codes (design §12): 0 ok/cancelled; 1 generic; 2 usage; 3 prerequisite;
 #                          5 Spec Kit stage; 6 overlay stage.
@@ -69,6 +69,8 @@ trap '_bootstrap_err $LINENO' ERR
 . "${SCRIPT_DIR}/lib/update.sh"
 # shellcheck source=lib/wizard.sh
 . "${SCRIPT_DIR}/lib/wizard.sh"
+# shellcheck source=lib/opencode_config.sh
+. "${SCRIPT_DIR}/lib/opencode_config.sh"
 
 # --- version pins -------------------------------------------------------------
 if [[ -f "${TOOLBOX_ROOT}/versions.env" ]]; then
@@ -274,6 +276,13 @@ main() {
             fi
             ;;
     esac
+
+    # Stage: project opencode.json (context7 MCP; create-or-merge, never clobbers).
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        ui_info "[dry-run] would ensure project opencode.json (context7 MCP)"
+    else
+        ensure_opencode_json "$target"
+    fi
 
     # Stage: config + manifest (manifest LAST — design §5.2).
     if [[ "$DRY_RUN" -eq 1 ]]; then

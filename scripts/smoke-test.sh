@@ -15,6 +15,9 @@
 #   6 unknown --profile -> exit 2 + available profiles listed
 #   7 --no-spec-kit -> overlay installs; no .specify/
 #   8 restricted PATH -> prereq failure exit 3 + actionable hint
+#   9 existing opencode.json -> context7 merged, other content preserved
+#  10 existing context7 entry -> left byte-identical
+#  11 invalid opencode.json -> warn, unchanged, install still succeeds
 #
 # Runnable standalone from anywhere. Exit codes: 0 all scenarios passed;
 # 1 one or more scenarios failed.
@@ -102,6 +105,9 @@ for f in .sdd-toolbox/manifest.json .sdd-toolbox/config.json \
 done
 jq -e '.profile == "minimal" and .pins.oac == "0.5.2"' "$T1/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
     && ok "manifest profile + OAC pin" || bad "manifest profile + OAC pin"
+[[ -f "$T1/opencode.json" ]] && ok "opencode.json created" || bad "opencode.json created"
+jq -e '.mcp.context7.url == "https://mcp.context7.com/mcp" and .mcp.context7.enabled == true' "$T1/opencode.json" >/dev/null 2>&1 \
+    && ok "context7 MCP entry present" || bad "context7 MCP entry present"
 grep -q '^UV:' "$STUB_LOG" && bad "no global install (uv was invoked)" || ok "no global install (uv not invoked)"
 scenario_end
 
@@ -196,6 +202,62 @@ PATH="$RBIN" STUB_LOG="$STUB_LOG" "$BOOTSTRAP" "$T8" --profile minimal --yes >"$
 grep -q 'missing required tool' "$LAST_OUT" && ok "names missing tool" || bad "names missing tool"
 grep -q 'remedy' "$LAST_OUT" && ok "actionable remedy hint" || bad "actionable remedy hint"
 [[ ! -e "$T8/.sdd-toolbox" ]] && ok "no writes on prereq failure" || bad "no writes on prereq failure"
+scenario_end
+
+# ===========================================================================
+# Scenario 9 — merge into an existing opencode.json
+scenario_begin "Scenario 9: existing opencode.json -> context7 merged, rest preserved"
+T9="$SCRATCH/s9"; mkdir -p "$T9"
+cat > "$T9/opencode.json" <<'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "other": { "type": "remote", "url": "https://example.test/mcp" }
+  },
+  "permission": { "bash": "ask" }
+}
+EOF
+rc=0; run_bootstrap "$T9" --profile minimal --yes || rc=$?
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
+jq -e '.mcp.context7.url == "https://mcp.context7.com/mcp"' "$T9/opencode.json" >/dev/null 2>&1 \
+    && ok "context7 merged" || bad "context7 merged"
+jq -e '.mcp.other.url == "https://example.test/mcp" and .permission.bash == "ask"' "$T9/opencode.json" >/dev/null 2>&1 \
+    && ok "existing content preserved" || bad "existing content preserved"
+scenario_end
+
+# ===========================================================================
+# Scenario 10 — existing context7 entry untouched
+scenario_begin "Scenario 10: existing context7 entry -> byte-identical"
+T10="$SCRATCH/s10"; mkdir -p "$T10"
+cat > "$T10/opencode.json" <<'EOF'
+{
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "CONTEXT7_API_KEY": "custom-key" }
+    }
+  }
+}
+EOF
+before_hash="$(hash_file "$T10/opencode.json")"
+rc=0; run_bootstrap "$T10" --profile minimal --yes || rc=$?
+after_hash="$(hash_file "$T10/opencode.json")"
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
+[[ "$before_hash" == "$after_hash" ]] && ok "custom context7 left byte-identical" || bad "custom context7 left byte-identical"
+scenario_end
+
+# ===========================================================================
+# Scenario 11 — invalid opencode.json -> warn, unchanged
+scenario_begin "Scenario 11: invalid opencode.json -> warned, unchanged, install ok"
+T11="$SCRATCH/s11"; mkdir -p "$T11"
+printf '{ this is not json\n' > "$T11/opencode.json"
+before_hash="$(hash_file "$T11/opencode.json")"
+rc=0; run_bootstrap "$T11" --profile minimal --yes || rc=$?
+after_hash="$(hash_file "$T11/opencode.json")"
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
+[[ "$before_hash" == "$after_hash" ]] && ok "invalid file left unchanged" || bad "invalid file left unchanged"
+grep -q 'not valid JSON' "$LAST_OUT" && ok "warning reported" || bad "warning reported"
 scenario_end
 
 # ===========================================================================

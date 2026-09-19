@@ -83,6 +83,9 @@ Interactive mode always asks for the profile. Defaults (`target=.`, `profile=min
 | `specs/` | feature artifacts, created by Spec Kit as features are specified — Spec Kit-owned |
 | `.sdd-toolbox/manifest.json` | ownership record: toolbox/OAC/Spec Kit pins, profile, extensions, per-file hashes |
 | `.sdd-toolbox/config.json` | runtime settings the driver reads (see [Driver Agent](#driver-agent)) |
+| `opencode.json` | project-local opencode config with the [context7](https://context7.com) MCP server (created, or merged into an existing file; an existing `context7` entry is never overwritten) |
+
+The generated `opencode.json` works keyless. For higher context7 rate limits, add `"headers": {"CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"}` (or a literal key) to its `context7` entry — the toolbox never rewrites an existing entry.
 
 ### Next steps
 
@@ -141,6 +144,7 @@ Every managed file is classified before anything is written:
 - `--update` without an existing manifest exits **6** with the manifest path in the message.
 - Backups from `--update --force` land in `.sdd-toolbox/backup/<UTC-timestamp>/<relpath>`.
 - The manifest is written **last**, so a partial install is always detectable and safely re-runnable.
+- `opencode.json` is ensured on every run (create or merge); an existing `context7` entry is never overwritten and the file is not manifest-managed.
 - No operation ever deletes unmanaged files; `stale` entries are reported, left on disk, and retained in the manifest — never removed.
 - User-modified `.sdd-toolbox/config.json` is preserved by the same policy.
 
