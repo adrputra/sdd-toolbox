@@ -1,7 +1,7 @@
 ---
 name: The Flash
 description: "Orchestration agent for complex coding, architecture, and multi-file refactoring"
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: primary
 temperature: 0.1
 permission:

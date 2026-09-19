@@ -2,6 +2,7 @@
 name: spec-kit-driver
 description: "Spec-driven development driver — orchestrates GitHub Spec Kit's /speckit.* workflow with mandatory review gates, a pre-plan requirements-analysis pass, and dependency-ordered parallel wave execution. Entry point: /sdd <request>."
 mode: primary
+model: deepseek/deepseek-flash
 temperature: 0.1
 permission:
   bash:

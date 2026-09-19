@@ -1,7 +1,7 @@
 ---
 name: BuildAgent
 description: Type check and build validation agent
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:

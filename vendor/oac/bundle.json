@@ -1,73 +1,73 @@
 {
   "version": "0.5.2",
-  "provenance": "shipgo-backend-go/.opencode snapshot (OAC registry context v0.5.2), 2026-09-19",
+  "provenance": "shipgo-backend-go/.opencode snapshot (OAC registry context v0.5.2), 2026-09-19; model pins normalized to deepseek/deepseek-flash (V4.1 Flash) on 2026-09-19",
   "generated_by": "scripts/vendor-sync.sh",
   "files": [
     {
       "path": ".opencode/agent/core/openagent.md",
       "id": "openagent",
       "type": "agent",
-      "sha256": "c11de8f36fa37763c86c03dd324fb5d3d7b93e7b0e293f8f9bca791a15585afa"
+      "sha256": "1d567e6d2c7bec7eba8323cf7c7283f653a72d5cbef1d96b53b85d86bffc481a"
     },
     {
       "path": ".opencode/agent/core/opencoder.md",
       "id": "opencoder",
       "type": "agent",
-      "sha256": "53eab43b588cb6c15b3750b5f8c25a0dc7c3eef0d8fde2697dd5d5f5a66ca47e"
+      "sha256": "980be9eabd6f522352e89c93751bfcdb9de84fdd0ed0b379127eefd59848f885"
     },
     {
       "path": ".opencode/agent/subagents/code/coder-agent.md",
       "id": "coder-agent",
       "type": "subagent",
-      "sha256": "5a425386aa5f1aff7ccac9745f0a16752fd598262e2cbc2255ecab1fcd64350c"
+      "sha256": "ca5ae658e3a23c032b45a86fa8c30288a4e5b67674a7563fe3c5cfec7dc3ddf9"
     },
     {
       "path": ".opencode/agent/subagents/code/build-agent.md",
       "id": "build-agent",
       "type": "subagent",
-      "sha256": "88678c260accf95a2f327d82af00db65b5271e2ccf3ca3adf6c9f5c7402a7617"
+      "sha256": "77fd0626eb94dd16bf3aa1cabeac9eb9dde3f23ad4e2cb3f759c5eae7bb1d5ae"
     },
     {
       "path": ".opencode/agent/subagents/code/test-engineer.md",
       "id": "test-engineer",
       "type": "subagent",
-      "sha256": "8b275369783390b5c546401adb4df8c3ed835d0a11dda7cc0732eff461a1b906"
+      "sha256": "5de030ce4f7b677bf903328479b38f8faf43956475fe106f75e630bb8ba5f76d"
     },
     {
       "path": ".opencode/agent/subagents/code/reviewer.md",
       "id": "reviewer",
       "type": "subagent",
-      "sha256": "0f65b57bd51d768aa4d07fd3765ae4c45506b19266afa08522910c3f4a39b5ca"
+      "sha256": "4549dbb22d2f67fcaa9b8915759d1a01c734a8630e2b5db83d41906b7c72f5d7"
     },
     {
       "path": ".opencode/agent/subagents/core/batch-executor.md",
       "id": "batch-executor",
       "type": "subagent",
-      "sha256": "485fd930e0573660f34988c8b50d06ff47f0156c770a229a8dfc73f078a087cb"
+      "sha256": "aebef03f2dd9942c1bdd22e4acfaf4801ae5e15160aecd26219d8303287300c7"
     },
     {
       "path": ".opencode/agent/subagents/core/contextscout.md",
       "id": "contextscout",
       "type": "subagent",
-      "sha256": "d0bf6d42741d4de4e4fb1c9593ee0a84710201d29bdb29208752995e652d677b"
+      "sha256": "90726490ded7ab238f50d316e28a532f0bed298671e8fde0de46b00fd9e0ae4a"
     },
     {
       "path": ".opencode/agent/subagents/core/task-manager.md",
       "id": "task-manager",
       "type": "subagent",
-      "sha256": "cd259316e5227eb88e320b9607cfd197920a708b78a287319d9f06b9e662b0f0"
+      "sha256": "3123f15f321f6dc81b63a446bf52ce49b3472b3882d06e2fd3f19fe607c4669a"
     },
     {
       "path": ".opencode/agent/subagents/core/externalscout.md",
       "id": "externalscout",
       "type": "subagent",
-      "sha256": "c94642306ba0c90195df539266673858e96b8d6114915939fb31beb97b880f80"
+      "sha256": "9a20a30a64ceeb770aaf9964c03a572f2936ab4ac21eff507a6ef406aef35792"
     },
     {
       "path": ".opencode/agent/subagents/core/documentation.md",
       "id": "documentation",
       "type": "subagent",
-      "sha256": "bfff29ece0f71070ffebf31158048775f060619718b0ace420ae28d9b85c5283"
+      "sha256": "62175762c30726c29a7893dd495d637ee3a1f67c1eb7ae0844a521ff0ccbe1a0"
     },
     {
       "path": ".opencode/context/core/standards/code-quality.md",

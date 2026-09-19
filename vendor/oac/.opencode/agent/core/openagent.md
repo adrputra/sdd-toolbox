@@ -1,7 +1,7 @@
 ---
 name: OpenAgent
 description: "Universal agent for answering queries, executing tasks, and coordinating workflows across any domain"
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: primary
 temperature: 0.2
 permission:

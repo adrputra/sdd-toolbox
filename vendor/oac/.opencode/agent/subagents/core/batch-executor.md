@@ -1,7 +1,7 @@
 ---
 name: BatchExecutor
 description: Executes sequences of tasks in batch mode, processing multiple operations efficiently with progress tracking
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:

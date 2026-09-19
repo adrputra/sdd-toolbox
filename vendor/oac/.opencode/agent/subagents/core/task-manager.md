@@ -1,7 +1,7 @@
 ---
 name: TaskManager
 description: JSON-driven task breakdown specialist transforming complex features into atomic, verifiable subtasks with dependency tracking and CLI integration
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:

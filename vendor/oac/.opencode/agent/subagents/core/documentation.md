@@ -1,7 +1,7 @@
 ---
 name: DocWriter
 description: Documentation authoring agent
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.2
 permission:

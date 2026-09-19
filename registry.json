@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "schema_version": "2.0.0",
   "components": {
     "agents": [
@@ -11,7 +11,7 @@
         "description": "Primary agent that orchestrates GitHub Spec Kit's SDD workflow with mandatory review gates, a pre-plan requirements-analysis pass, and dependency-ordered parallel wave execution.",
         "category": "core",
         "tags": ["sdd", "spec-kit", "driver", "orchestration", "waves"],
-        "version": "0.1.0"
+        "version": "0.2.1"
       }
     ],
     "subagents": [],

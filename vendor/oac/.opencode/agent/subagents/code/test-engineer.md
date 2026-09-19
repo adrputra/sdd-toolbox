@@ -1,7 +1,7 @@
 ---
 name: TestEngineer
 description: Test authoring (TDD unit tests) AND end-to-end API workflow verification agent. Mode A writes unit tests (ContextScout first, AAA, positive+negative, mocked externals). Mode B executes E2E FSM workflow test cases: drives the real API with curl, verifies every state transition with read-only DB queries, and reports evidence-first pass/fail (never claims without fresh verification output).
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:

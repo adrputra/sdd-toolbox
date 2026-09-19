@@ -1,7 +1,7 @@
 ---
 name: Reviewer
 description: Code review agent analyzing diffs for bugs, security issues, performance problems, and architectural violations
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:

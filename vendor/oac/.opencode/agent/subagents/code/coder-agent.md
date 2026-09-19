@@ -1,7 +1,7 @@
 ---
 name: CoderAgent
 description: Executes coding subtasks in sequence, ensuring completion as specified
-model: deepseek/deepseek-v4-pro
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0
 permission:

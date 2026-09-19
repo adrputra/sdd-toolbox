@@ -1,7 +1,7 @@
 ---
 name: ExternalScout
 description: Searches external documentation, APIs, and package registries for frameworks and libraries not found in project context
-model: deepseek/deepseek-v4-flash
+model: deepseek/deepseek-flash
 mode: subagent
 temperature: 0.1
 permission:
