@@ -32,7 +32,7 @@ The vendored snapshot is produced by `scripts/vendor-sync.sh` (see [Vendoring OA
 | `curl` | Spec Kit bootstrap / network reachability | Required. |
 | `sha256sum` or `shasum -a 256` | file hashes in the manifest | coreutils on Linux, built-in `shasum` on macOS. |
 | `gum` or `fzf` | enhanced wizard menus | **Optional.** Numbered prompts are the always-available fallback. |
-| `git` | resolve the latest Spec Kit tag, record the toolbox commit | Used opportunistically; not enforced by the prereq check. |
+| `git` | one-line installer, Spec Kit install | Required by the one-line installer; also used by `uv` to install Spec Kit from its git tag. Not enforced by the prereq check. |
 
 If a required tool is missing, bootstrap prints a one-line cause and an OS-aware install hint, then exits **3** without writing anything.
 
@@ -57,6 +57,20 @@ Non-interactive (CI, scripts, or when you already know the plan):
 ```sh
 ./bootstrap.sh <target> --profile minimal --yes
 ```
+
+From anywhere — one line, no clone (fetches a managed checkout to `~/.sdd-toolbox`):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/adrputra/sdd-toolbox/main/install.sh | bash -s -- <target> --profile minimal --yes
+```
+
+Interactive wizard via the same one-liner (bash process substitution keeps your terminal on stdin):
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/adrputra/sdd-toolbox/main/install.sh)
+```
+
+Pin a version or relocate the managed checkout with `SDD_TOOLBOX_REF` / `SDD_TOOLBOX_HOME`.
 
 Interactive mode always asks for the profile. Defaults (`target=.`, `profile=minimal`) apply only to non-interactive runs.
 

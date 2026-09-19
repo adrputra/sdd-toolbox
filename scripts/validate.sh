@@ -3,7 +3,7 @@
 # scripts/validate.sh — offline repository self-check (design §14.1, task T17).
 #
 # Verifies, with per-check output:
-#   * bash -n on every shell file in the repo (bootstrap.sh, lib/*.sh, scripts/*.sh)
+#   * bash -n on every shell file in the repo (bootstrap.sh, install.sh, lib/*.sh, scripts/*.sh)
 #   * shellcheck on those files when installed (skipped, visibly, when absent)
 #   * jq schema of registry.json, every profiles/*.json, vendor/oac/bundle.json
 #   * versions.env is sourceable and both pins are non-empty

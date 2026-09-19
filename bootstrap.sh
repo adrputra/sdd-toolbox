@@ -259,7 +259,7 @@ main() {
                 if [[ -d "$target" ]]; then plan_install "$target" "$components"; fi
             else
                 ui_info "installing components..."
-                install_components "$target" "$components"
+                install_components "$target" "$components" || exit 6
             fi
             ;;
         update|reinstall)
@@ -270,7 +270,7 @@ main() {
                 if [[ -d "$target" ]]; then update_components "$target" "$uforce" 1; fi
             else
                 ui_info "updating components (force=$uforce)..."
-                update_components "$target" "$uforce" 0
+                update_components "$target" "$uforce" 0 || exit 6
             fi
             ;;
     esac
