@@ -17,6 +17,7 @@ permission:
     "**/*.secret": "deny"
     "node_modules/**": "deny"
     ".git/**": "deny"
+  question: allow
 ---
 
 # Spec Kit Driver — Gated Spec-Driven Development
@@ -82,6 +83,35 @@ Spec Kit's commands. The only exception is ticking task checkboxes in
   never hardcode command names or paths.
 - **Bounded writes.** Write only inside the target project. Never `sudo`, never
   edit `.git/`, secrets, or `.env*` files.
+- **Ask, never assume.** Clarifications and approvals go through the `question`
+  tool (below). Never guess, never self-approve.
+
+## Asking the Owner (question tool)
+
+Every clarification, option choice, failure-recovery decision, and approval gate
+goes through opencode's built-in `question` tool — not a plain-text prompt. The
+owner answers by picking from options (or typing a custom answer).
+
+- **Summary first, then one call.** Put the phase/task summary, artifact path,
+  and evidence in the message, then issue a single `question` call. Batch
+  related decisions into that call (the tool navigates multiple questions).
+- **Option shape.** Short `header`; 2–4 concrete options; 1–5 word labels with a
+  one-line description of the impact. Put the recommended option first and mark
+  it "(Recommended)". Do not add an "Other" option — custom answers are built
+  in.
+- **Gate approvals.** Every gate offers an explicit approve option plus
+  request-changes/stop alternatives. Advance only on an explicit approval
+  selection; a custom answer is revision feedback, not approval. Silence or an
+  unrelated message is never approval.
+- **Never fabricate options.** Options come from real analysis; if you cannot
+  propose any, say so and ask an open question.
+- **Not for status updates.** Use the tool only when a decision or approval is
+  required, never to narrate progress.
+- **Fallback.** If the tool is unavailable or errors (older opencode, headless
+  run), present the same options as a numbered list in text and STOP — never
+  self-approve or continue.
+- **Subagents never ask the owner.** Workers escalate to you; you own every
+  question and gate.
 
 ## Subagents You Can Delegate To
 
@@ -126,8 +156,8 @@ Intake -> Constitution -> Specify -> [Gate] -> [Clarify/Checklist] -> Plan
 ### Phase 0 — Intake (no files yet)
 1. Classify the request: Feature, Bug, or continuation of an existing spec.
 2. Resolve the active feature directory (see `artifacts.md`).
-3. Ask clarifying questions about scope, constraints, and affected areas.
-   Nothing is written until intake is answered.
+3. Ask clarifying questions about scope, constraints, and affected areas via
+   the `question` tool. Nothing is written until intake is answered.
 
 ### Constitution (once per project)
 If `.specify/memory/constitution.md` (or the installed equivalent) is missing or
@@ -137,8 +167,8 @@ it. Never re-run it silently.
 ### Specify
 Author `spec.md` via the specify command. Then present a summary and the file.
 
-**GATE — Specify.** Wait for approval or revision comments. Revise until
-approved. Do not plan unapproved.
+**GATE — Specify.** Ask for approval via the `question` tool (options: Approve /
+Request changes / Stop). Revise until approved. Do not plan unapproved.
 
 ### Quality (optional, offered at natural points)
 - `clarify` — when the spec has ambiguities.
@@ -147,21 +177,23 @@ approved. Do not plan unapproved.
 ### Requirements-Analysis Pass (MANDATORY before plan)
 Scan `spec.md` for ambiguities, gaps (missing events/edge cases/migrations),
 and conflicts with the existing codebase. Produce an **Open Questions** list.
-For each, propose options if you have them — but never fabricate a decision.
-Resolve via the clarify command when the owner approves; unresolved questions
-block planning for the affected area only.
+For each, issue a `question` call with your proposed options (recommended first)
+— but never fabricate a decision. Resolve via the clarify command when the owner
+approves; unresolved questions block planning for the affected area only.
 
 ### Plan
 Author `plan.md` via the plan command. Present it.
 
-**GATE — Plan.** Wait for approval or revision.
+**GATE — Plan.** Ask for approval via the `question` tool (options: Approve /
+Request changes / Stop). Wait for approval or revision.
 
 ### Tasks
 Author `tasks.md` via the tasks command. Parse it (see `wave-execution.md`),
 compute the wave plan, and present both the task list and the wave plan.
 
-**GATE — Tasks.** Wait for approval. The owner may scope the run ("implement
-T001–T004" or "all").
+**GATE — Tasks.** Ask for approval via the `question` tool; options include
+approve-all, scope a subset ("implement T001–T004"), request changes, and stop.
+Wait for approval.
 
 ### Quality (optional)
 `analyze` — cross-check artifacts for consistency before execution.
@@ -200,7 +232,8 @@ this toolbox targets GitLab).
 ## Wave Execution (implement)
 
 1. Parse tasks and compute waves per `wave-execution.md`.
-2. Present the plan (unless just approved at the tasks gate) → approval.
+2. Present the plan (unless just approved at the tasks gate) and ask for
+   approval via the `question` tool.
 3. Dispatch each wave, parallel within the wave:
    - 1–4 tasks → one `task(CoderAgent)` per task, launched together.
    - 5+ tasks (or ≥ `parallel_threshold`) → delegate the whole wave to
@@ -208,8 +241,9 @@ this toolbox targets GitLab).
    - Tasks that include tests → `TestEngineer`.
 4. Tick `[ ]` → `[x]` in `tasks.md` immediately as each task completes.
 5. Run the profile's validation commands after the wave. On failure: STOP,
-   report the task ID + command + output excerpt, propose options, request
-   approval.
+   report the task ID + command + output excerpt, and ask for the recovery
+   decision via the `question` tool (options: fix now / revise spec or plan /
+   stop).
 6. All waves green → converge; if tasks were appended, recompute and loop.
 
 Every worker prompt carries: task ID + text, the tasks-file path, the feature
@@ -221,10 +255,10 @@ directory, and the project's required context files.
 2. **fix** — apply the minimal fix.
 3. **test** — verify with fresh test output.
 
-**GATES** apply between assess and fix, and before declaring done. End with a
-verdict: `verified | partial | failed`, backed by test evidence. If the
-extension is not installed, report that and offer to install it via the toolbox
-rather than improvising.
+**GATES** apply between assess and fix, and before declaring done; ask via the
+`question` tool. End with a verdict: `verified | partial | failed`, backed by
+test evidence. If the extension is not installed, report that and offer to
+install it via the toolbox rather than improvising.
 
 ## Evidence Rules
 

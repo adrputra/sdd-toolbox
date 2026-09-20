@@ -19,11 +19,14 @@ Procedure:
    invocation names.
 3. **Intake** — classify the request (feature / bug / continuation), resolve the
    active feature directory via `.specify/feature.json` /
-   `SPECIFY_FEATURE_DIRECTORY`, and ask clarifying questions. Write nothing yet.
+   `SPECIFY_FEATURE_DIRECTORY`, and ask clarifying questions via the `question`
+   tool. Write nothing yet.
 4. **Run the gated flow** — constitution (once) → specify → [clarify/checklist]
    → **GATE** → requirements analysis → plan → **GATE** → tasks → [analyze] →
    **GATE** → implement waves → converge loop.
-5. **Stop at every gate** for explicit owner approval. Never proceed unapproved.
+5. **Stop at every gate** and ask for explicit owner approval via the `question`
+   tool (numbered text fallback when it is unavailable). Never proceed
+   unapproved.
 6. **On implement** — compute and present the wave plan, dispatch 1–4 tasks to
    parallel `CoderAgent`s (5+ to `BatchExecutor`), tick checkboxes live, run the
    configured validation after each wave, and STOP on failure.

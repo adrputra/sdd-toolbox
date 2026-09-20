@@ -86,7 +86,8 @@ Wave 2: T002         (depends on T001)
 Wave 3: T004, T005   (parallel)
 ```
 
-Include the sidecar path so the owner can adjust it. Wait for approval.
+Include the sidecar path so the owner can adjust it. Ask for approval via the
+`question` tool (options: Approve / Adjust sidecar / Stop), then wait.
 
 ## 5. Dispatch
 
@@ -118,7 +119,8 @@ Run the configured validation commands:
 
 - `.sdd-toolbox/config.json` → `validation.commands` (array). Empty → profile
   default (e.g. `go-backend`: `go vet ./...` then
-  `go test -race -count=1 ./...`).
+  `go test -race -count=1 ./...`; `node-typescript`: `npx tsc --noEmit` then
+  `npm test`).
 - `minimal` profile: no commands (converge still runs).
 
 Run commands from the repo root (or the configured `scope`). Capture fresh
@@ -130,8 +132,10 @@ On any validation failure or task failure:
 
 1. **STOP** — do not start the next wave.
 2. Report: task ID, exact command, output excerpt (the failing lines).
-3. Propose options (fix-forward, revise spec, re-scope, abort).
-4. Request approval before continuing. Never auto-fix, never skip ahead.
+3. Ask for the recovery decision via the `question` tool (options: fix-forward,
+   revise spec, re-scope, abort).
+4. Wait for an explicit selection before continuing. Never auto-fix, never skip
+   ahead.
 
 ## 9. Converge and re-plan
 

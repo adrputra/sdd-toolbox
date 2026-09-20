@@ -45,7 +45,7 @@ Arguments:
   <target-dir>         Directory to install into (default: current directory).
 
 Options:
-  --profile <name>     Non-interactive profile selection (e.g. minimal, go-backend).
+  --profile <name>     Non-interactive profile selection (e.g. minimal, go-backend, node-typescript).
   --yes                Assume yes for all prompts (implies non-interactive).
   --update             Update mode; requires an existing toolbox manifest.
   --force              With --update: reinstall mode (overwrite modified files).

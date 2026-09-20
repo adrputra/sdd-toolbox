@@ -1,5 +1,5 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "schema_version": "2.0.0",
   "components": {
     "agents": [
@@ -11,7 +11,7 @@
         "description": "Primary agent that orchestrates GitHub Spec Kit's SDD workflow with mandatory review gates, a pre-plan requirements-analysis pass, and dependency-ordered parallel wave execution.",
         "category": "core",
         "tags": ["sdd", "spec-kit", "driver", "orchestration", "waves"],
-        "version": "0.2.1"
+        "version": "0.3.0"
       }
     ],
     "subagents": [],
@@ -77,6 +77,16 @@
         "description": "Evidence rules: no completion claim without fresh command output, and the verdict format for bug-fix flows.",
         "category": "spec-kit",
         "tags": ["sdd", "spec-kit", "evidence", "verification"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "typescript-standards",
+        "name": "TypeScript Standards",
+        "type": "context",
+        "path": "components/context/typescript/standards.md",
+        "description": "TypeScript conventions for Node.js projects: strict compiler discipline, type modeling, ESM imports, async/error handling, naming, and testing expectations.",
+        "category": "typescript",
+        "tags": ["typescript", "node", "standards"],
         "version": "0.1.0"
       }
     ]

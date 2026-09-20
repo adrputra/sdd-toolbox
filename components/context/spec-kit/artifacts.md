@@ -50,7 +50,8 @@ Resolve the active feature before doing anything else. Precedence:
 3. **Pointer file** — `.specify/feature.json` (e.g. `{"feature_directory":
    "specs/001-photo-albums"}` or a `feature`/`path` key).
 4. **Filesystem** — when exactly one directory exists under `specs/`, use it.
-5. **Ambiguous** — list `specs/*` and ask the owner to choose. Never guess.
+5. **Ambiguous** — list `specs/*` and ask the owner to choose via the `question`
+   tool. Never guess.
 
 Once resolved, keep the feature directory fixed for the run and pass it to every
 delegated worker.

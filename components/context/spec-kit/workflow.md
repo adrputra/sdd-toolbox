@@ -43,8 +43,8 @@ Intake
 
 ### Intake
 Classify the request (feature / bug / continuation), resolve the active feature
-directory (see [`artifacts.md`](artifacts.md)), and ask clarifying questions.
-Write nothing until intake is answered.
+directory (see [`artifacts.md`](artifacts.md)), and ask clarifying questions via
+the `question` tool. Write nothing until intake is answered.
 
 ### Constitution
 Run the constitution capability once per project when the constitution is
@@ -66,9 +66,10 @@ Scan `spec.md` for:
 - **Gaps** — missing triggers/events, edge cases, data migrations.
 - **Conflicts** — with other criteria or with the existing codebase.
 
-Output an **Open Questions** list. For each, propose options if you have them,
-but never fabricate a decision. Resolve through the clarify capability when the
-owner approves. Unresolved questions block planning for the affected area only.
+Output an **Open Questions** list. For each, ask via the `question` tool with
+your proposed options (recommended first), but never fabricate a decision.
+Resolve through the clarify capability when the owner approves. Unresolved
+questions block planning for the affected area only.
 
 ### Plan
 Author `plan.md` through the plan capability. Present it.
@@ -100,14 +101,18 @@ stops.
 A gate is a hard stop:
 
 1. Present a concise summary: what changed, the artifact path, and open items.
-2. Ask for explicit approval. Do not interpret silence or an unrelated message
-   as approval.
+2. Ask for explicit approval via the `question` tool (options: Approve / Request
+   changes / Stop; recommended option first). Do not interpret silence or an
+   unrelated message as approval.
 3. On revision comments, apply them and re-present the same gate.
-4. On approval, advance exactly one phase.
+4. On an explicit approval selection, advance exactly one phase.
 5. If the spec proves wrong at any point, STOP and update it with approval —
    never drift silently.
 
-Gates: **Specify**, **Plan**, **Tasks**, plus the bug-flow gates below.
+Gates: **Specify**, **Plan**, **Tasks**, plus the bug-flow gates below. The
+option shape is defined in the driver's *Asking the Owner* section: 2–4 concrete
+options with one-line descriptions, no "Other" option (custom answers are built
+in), and a numbered text list as fallback when the tool is unavailable.
 
 ## Bug flow (bug extension required)
 
@@ -116,7 +121,8 @@ assess -> GATE -> fix -> test -> verdict
 ```
 
 1. **assess** — reproduce and characterise; capture current vs expected.
-2. **GATE** — owner approves the assessment before any fix.
+2. **GATE** — owner approves the assessment via the `question` tool before any
+   fix.
 3. **fix** — apply the minimal change.
 4. **test** — run fresh tests.
 5. **verdict** — `verified | partial | failed`, backed by test evidence (see
@@ -128,5 +134,5 @@ toolbox; do not improvise a substitute flow.
 ## Stop rules
 
 - Any command failure, missing capability, or failed validation STOPS the flow.
-- Report the failure, propose options, and request approval before continuing.
+- Report the failure and ask for the recovery decision via the `question` tool.
 - Never auto-fix, never skip a gate, never advance a wave on red.

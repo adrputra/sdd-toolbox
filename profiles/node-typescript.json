@@ -1,0 +1,31 @@
+{
+  "name": "node-typescript",
+  "description": "Node.js/TypeScript SDD flow: minimal plus review/build subagents and the TypeScript standards context; type-check and test validation after each wave.",
+  "components": [
+    "agent:spec-kit-driver",
+    "command:sdd",
+    "context:spec-kit-navigation",
+    "context:spec-kit-workflow",
+    "context:spec-kit-artifacts",
+    "context:spec-kit-wave-execution",
+    "context:spec-kit-evidence",
+    "subagent:contextscout",
+    "subagent:externalscout",
+    "subagent:task-manager",
+    "subagent:coder-agent",
+    "subagent:batch-executor",
+    "subagent:test-engineer",
+    "subagent:documentation",
+    "context:code-quality",
+    "subagent:reviewer",
+    "subagent:build-agent",
+    "context:test-coverage",
+    "context:typescript-standards"
+  ],
+  "settings": {
+    "wave_strategy": "auto",
+    "parallel_threshold": 5,
+    "validation": { "commands": ["npx tsc --noEmit", "npm test"], "scope": "repo" },
+    "converge_loop": true
+  }
+}

@@ -100,7 +100,7 @@ cd <target>
 | Flag | Meaning |
 |---|---|
 | `<target-dir>` | Directory to install into (default: current directory). |
-| `--profile <name>` | Non-interactive profile selection (`minimal`, `go-backend`). |
+| `--profile <name>` | Non-interactive profile selection (`minimal`, `go-backend`, `node-typescript`). |
 | `--yes` | Assume yes for all prompts (implies non-interactive). |
 | `--update` | Update mode; requires an existing toolbox manifest. |
 | `--force` | With `--update`: reinstall mode (overwrite modified files). |
@@ -120,6 +120,7 @@ A profile is a declarative JSON bundle of components plus runtime settings. Menu
 |---|---|---|
 | `minimal` (default) | Spec Kit integration + driver agent + `/sdd` + spec-kit context + the delegation subagents. No stack-specific tooling. | none (`converge` still runs) |
 | `go-backend` | Everything in `minimal`, plus the review/build subagents and test-coverage context. | `go vet ./...` then `go test -race -count=1 ./...` |
+| `node-typescript` | Everything in `minimal`, plus the review/build subagents, test-coverage and TypeScript standards contexts. | `npx tsc --noEmit` then `npm test` |
 
 Selecting an unknown profile exits **2** and lists the available profiles.
 
@@ -163,6 +164,10 @@ constitution (once) → specify → [clarify/checklist] → plan → tasks → [
 
 Hard gates at **Specify**, **Plan**, and **Tasks** (plus the bug-flow gates). Between phases the driver presents a summary and waits for explicit approval — it never proceeds unapproved. Before planning it runs a mandatory requirements-analysis pass (ambiguities, gaps, conflicts with the repo) and surfaces **Open Questions**; it never invents answers.
 
+### Interactive gates
+
+Every clarification, option choice, and approval gate is asked through opencode's built-in **`question` tool**: the owner picks from 2–4 concrete options (recommended first) with one-line descriptions, or types a custom answer. The driver advances only on an explicit approval selection; a custom answer counts as revision feedback, not approval. When the tool is unavailable (older opencode, headless runs) the driver falls back to a numbered text list and still stops at the gate.
+
 ### Wave execution
 
 On implement, the driver parses `tasks.md` (IDs `T###`, `[P]` parallel markers, `[USn]` story tags, `(depends on T0xx)` refs), computes a dependency-ordered DAG, and presents the wave plan for approval. The plan is written to `.sdd-toolbox/waves/<feature>.json` (toolbox-owned; Spec Kit's `specs/` is never touched).
@@ -171,7 +176,7 @@ On implement, the driver parses `tasks.md` (IDs `T###`, `[P]` parallel markers, 
 - `>= parallel_threshold` (default 5): the whole wave goes to `BatchExecutor`.
 - Tasks that include tests use `TestEngineer`.
 - Checkboxes tick `[ ] → [x]` in `tasks.md` immediately as tasks complete.
-- The profile's validation commands run after each wave. On failure the driver **stops**, reports the task ID + command + output excerpt, proposes options, and requests approval — never auto-fixes or advances.
+- The profile's validation commands run after each wave. On failure the driver **stops**, reports the task ID + command + output excerpt, and asks for the recovery decision via the `question` tool — never auto-fixes or advances.
 - After all waves are green it runs `converge`; appended tasks are re-planned and the loop repeats until converged.
 
 ### Runtime configuration
@@ -213,8 +218,8 @@ scripts/validate.sh      # repo self-check: syntax, schemas, reference integrity
 scripts/smoke-test.sh    # end-to-end bootstrap scenarios into temp dirs
 ```
 
-- `scripts/validate.sh` — offline self-check with per-check output: `bash -n` on every shell file (including `bootstrap.sh`), `shellcheck` on those files when installed (**skipped visibly** — a `[SKIP]` line — when absent), `jq` schema checks for `registry.json`, every `profiles/*.json`, `vendor/oac/bundle.json` and `versions.env`, and reference integrity (every profile component ID resolves via `catalog_resolve`; every driver-referenced subagent exists in the vendored subset; every registry path exists on disk; every bundle hash matches). Currently **92 checks**; exits **7** if any check fails and **0** otherwise.
-- `scripts/smoke-test.sh` — eight hermetic scenarios: fresh install, idempotency, update-preserve, force+backup, dry-run, unknown profile, `--no-spec-kit`, and a stripped-`PATH` prereq failure. `uv`/`specify` are stubbed on `PATH` (no network, no global installs), each scenario runs in its own directory under a scratch root that is removed on exit, and the suite exits **1** if any scenario fails.
+- `scripts/validate.sh` — offline self-check with per-check output: `bash -n` on every shell file (including `bootstrap.sh`), `shellcheck` on those files when installed (**skipped visibly** — a `[SKIP]` line — when absent), `jq` schema checks for `registry.json`, every `profiles/*.json`, `vendor/oac/bundle.json` and `versions.env`, and reference integrity (every profile component ID resolves via `catalog_resolve`; every driver-referenced subagent exists in the vendored subset; every registry path exists on disk; every bundle hash matches). Currently **122 checks**; exits **7** if any check fails and **0** otherwise.
+- `scripts/smoke-test.sh` — eleven hermetic scenarios: fresh install, idempotency, update-preserve, force+backup, dry-run, unknown profile, `--no-spec-kit`, a stripped-`PATH` prereq failure, and three `opencode.json` handling cases. `uv`/`specify` are stubbed on `PATH` (no network, no global installs), each scenario runs in its own directory under a scratch root that is removed on exit, and the suite exits **1** if any scenario fails.
 
 Tests override the data root with the **`TOOLBOX_ROOT`** environment variable: the code always loads from the script's own directory, but `TOOLBOX_ROOT` points `registry.json`, `profiles/`, `components/`, and `vendor/` at an alternate root (e.g. a fixture tree).
 

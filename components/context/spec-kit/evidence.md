@@ -66,7 +66,8 @@ A failure is reported, not hidden:
 1. The exact command that failed.
 2. The relevant output excerpt (failing lines, not the whole log).
 3. The task/wave it belongs to.
-4. Proposed next options, then **STOP** and request approval.
+4. Proposed next options asked via the `question` tool, then **STOP** and wait
+   for the owner's selection.
 
 Do not retry silently, do not weaken the check, do not proceed to the next wave.
 
