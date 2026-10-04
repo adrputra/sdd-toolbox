@@ -9,7 +9,9 @@
 #   * versions.env is sourceable and both pins are non-empty
 #   * reference integrity:
 #       - every profile component ID resolves via catalog_resolve
+#       - every profile extends chain resolves (no unknown parents or cycles)
 #       - every subagent referenced by the driver exists in the vendored subset
+#       - every subagent referenced by the roadmap driver resolves in the catalog
 #       - every registry path exists on disk
 #       - every bundle.json sha256 matches its on-disk file
 #
@@ -44,6 +46,7 @@ section() { printf '\n== %s ==\n' "$1"; }
 REGISTRY="$TOOLBOX_ROOT/registry.json"
 BUNDLE="$TOOLBOX_ROOT/vendor/oac/bundle.json"
 DRIVER="$TOOLBOX_ROOT/components/agent/core/spec-kit-driver.md"
+ROADMAP_DRIVER="$TOOLBOX_ROOT/components/agent/core/roadmap-driver.md"
 
 # list_shell_files — every .sh file in the repo (excluding .git).
 list_shell_files() {
@@ -51,12 +54,13 @@ list_shell_files() {
 }
 
 # extract_driver_subagents <file> — print backticked names in the driver's
-# "Subagents You Can Delegate To" table (first column).
+# "Subagents You Can Delegate To" table (first column). Only table rows are
+# scanned so prose mentions below the table are not treated as delegation.
 extract_driver_subagents() {
     awk '
         /^## Subagents You Can Delegate To/ { inb=1; next }
         /^## / { inb=0 }
-        inb {
+        inb && /^\|/ {
             line=$0
             while (match(line, /`[A-Za-z]+`/)) {
                 print substr(line, RSTART+1, RLENGTH-2)
@@ -76,6 +80,16 @@ driver_subagent_id() {
         BatchExecutor) printf 'batch-executor\n' ;;
         TestEngineer)  printf 'test-engineer\n' ;;
         DocWriter)     printf 'documentation\n' ;;
+        *)             printf '\n' ;;
+    esac
+}
+
+# roadmap_driver_subagent_ref <Name> — map the roadmap driver's delegation
+# table names to catalog references.
+roadmap_driver_subagent_ref() {
+    case "$1" in
+        FeatureRunner) printf 'subagent:feature-runner\n' ;;
+        DocWriter)     printf 'subagent:documentation\n' ;;
         *)             printf '\n' ;;
     esac
 }
@@ -113,7 +127,7 @@ if jq -e '.version and .schema_version and (.components | type == "object")' "$R
 else
     fail "registry.json: top-level schema"
 fi
-if jq -e '(.components | has("agents") and has("subagents") and has("commands") and has("tools") and has("contexts"))' "$REGISTRY" >/dev/null 2>&1; then
+if jq -e '(.components | has("agents") and has("subagents") and has("commands") and has("tools") and has("scripts") and has("contexts"))' "$REGISTRY" >/dev/null 2>&1; then
     pass "registry.json: all component groups present"
 else
     fail "registry.json: all component groups present"
@@ -142,6 +156,14 @@ while IFS= read -r pf; do
         pass "profiles/$name.json: name matches filename"
     else
         fail "profiles/$name.json: name matches filename (got '$pname')"
+    fi
+    parent="$(jq -r '.extends // ""' "$pf")"
+    if [[ -n "$parent" && "$parent" != "null" ]]; then
+        if profile_exists "$parent"; then
+            pass "profiles/$name.json: extends '$parent' exists"
+        else
+            fail "profiles/$name.json: extends unknown profile '$parent'"
+        fi
     fi
 done < <(find "$TOOLBOX_ROOT/profiles" -type f -name '*.json' | sort)
 
@@ -187,6 +209,11 @@ done < <(jq -r '.files[] | [.path, .sha256] | @tsv' "$BUNDLE")
 section "Reference integrity: profile component IDs"
 while IFS= read -r name; do
     [[ -n "$name" ]] || continue
+    if ! profile_components "$name" >/dev/null 2>&1; then
+        fail "profile $name: extends chain does not resolve"
+        continue
+    fi
+    pass "profile $name: extends chain resolves"
     while IFS= read -r id; do
         [[ -n "$id" ]] || continue
         if catalog_resolve "$id" >/dev/null 2>&1; then
@@ -223,6 +250,26 @@ for id in contextscout externalscout task-manager coder-agent batch-executor tes
         fail "expected subagent missing: $id"
     fi
 done
+
+section "Reference integrity: roadmap-driver subagents"
+names="$(extract_driver_subagents "$ROADMAP_DRIVER")"
+if [[ -z "$names" ]]; then
+    fail "roadmap-driver: subagent table not found in ${ROADMAP_DRIVER#"$TOOLBOX_ROOT"/}"
+else
+    while IFS= read -r nm; do
+        [[ -n "$nm" ]] || continue
+        ref="$(roadmap_driver_subagent_ref "$nm")"
+        if [[ -z "$ref" ]]; then
+            fail "roadmap-driver references unmapped subagent: $nm"
+            continue
+        fi
+        if catalog_resolve "$ref" >/dev/null 2>&1; then
+            pass "roadmap-driver subagent $nm -> $ref resolves"
+        else
+            fail "roadmap-driver subagent $nm -> $ref does not resolve"
+        fi
+    done <<< "$names"
+fi
 
 # --- result -------------------------------------------------------------------
 printf '\n== Summary ==\n'

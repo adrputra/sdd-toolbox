@@ -78,11 +78,12 @@ _wizard_component_options() {
     local reg="${TOOLBOX_ROOT%/}/registry.json" bundle="${TOOLBOX_ROOT%/}/vendor/oac/bundle.json"
     local custom="" vend=""
     [[ -f "$reg" ]] && custom="$(jq -r '
-        (.components.agents // [])[] | "agent:\(.id)",
-        (.components.subagents // [])[] | "subagent:\(.id)",
-        (.components.commands // [])[] | "command:\(.id)",
-        (.components.tools // [])[] | "tool:\(.id)",
-        (.components.contexts // [])[] | "context:\(.id)"' "$reg" 2>/dev/null)"
+        ((.components.agents // [])[] | "agent:\(.id)"),
+        ((.components.subagents // [])[] | "subagent:\(.id)"),
+        ((.components.commands // [])[] | "command:\(.id)"),
+        ((.components.tools // [])[] | "tool:\(.id)"),
+        ((.components.scripts // [])[] | "script:\(.id)"),
+        ((.components.contexts // [])[] | "context:\(.id)")' "$reg" 2>/dev/null)"
     [[ -f "$bundle" ]] && vend="$(jq -r '(.files // [])[] | "\(.type):\(.id)"' "$bundle" 2>/dev/null)"
     printf '%s\n%s\n' "$custom" "$vend" | awk 'NF' | sort -u
 }
@@ -92,11 +93,12 @@ _wizard_component_legend() {
     local reg="${TOOLBOX_ROOT%/}/registry.json"
     [[ -f "$reg" ]] || return 0
     jq -r '
-        (.components.agents // [])[] | "  agent:\(.id) — \(.description // "")",
-        (.components.subagents // [])[] | "  subagent:\(.id) — \(.description // "")",
-        (.components.commands // [])[] | "  command:\(.id) — \(.description // "")",
-        (.components.tools // [])[] | "  tool:\(.id) — \(.description // "")",
-        (.components.contexts // [])[] | "  context:\(.id) — \(.description // "")"' "$reg" 2>/dev/null
+        ((.components.agents // [])[] | "  agent:\(.id) — \(.description // "")"),
+        ((.components.subagents // [])[] | "  subagent:\(.id) — \(.description // "")"),
+        ((.components.commands // [])[] | "  command:\(.id) — \(.description // "")"),
+        ((.components.tools // [])[] | "  tool:\(.id) — \(.description // "")"),
+        ((.components.scripts // [])[] | "  script:\(.id) — \(.description // "")"),
+        ((.components.contexts // [])[] | "  context:\(.id) — \(.description // "")")' "$reg" 2>/dev/null
 }
 
 # run_wizard — execute the interactive wizard and set the WIZ_* globals.
@@ -170,7 +172,7 @@ run_wizard() {
 
     # 6. Advanced
     local psettings def_ws def_pt def_cmds def_scope ws
-    psettings="$(profile_json "$WIZ_PROFILE" | jq '.settings // {}')"
+    psettings="$(profile_settings "$WIZ_PROFILE")"
     def_ws="$(printf '%s' "$psettings" | jq -r '.wave_strategy // "auto"')"
     def_pt="$(printf '%s' "$psettings" | jq -r '.parallel_threshold // 5')"
     def_cmds="$(printf '%s' "$psettings" | jq -r '(.validation.commands // []) | join(", ")')"

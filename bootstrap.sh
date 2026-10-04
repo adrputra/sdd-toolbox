@@ -3,7 +3,8 @@
 # bootstrap.sh — SDD Toolbox entry point (design §5.1, §5.2, §5.3, §12).
 #
 # Bootstraps opencode-based SDD tooling (pinned GitHub Spec Kit + vendored OAC
-# subset + the spec-kit-driver agent) into a target project.
+# subset + the spec-kit-driver agent, with an optional roadmap outer loop) into
+# a target project.
 #
 # Usage:  bootstrap.sh [<target-dir>] [OPTIONS]     (see `--help`)
 #
@@ -284,6 +285,19 @@ main() {
         ensure_opencode_json "$target"
     fi
 
+    # Stage: roadmap state scaffold (only when the roadmap loop is installed).
+    local has_roadmap=0
+    if printf '%s' "$components" | tr ',' '\n' | grep -qx 'agent:roadmap-driver'; then
+        has_roadmap=1
+    fi
+    if [[ "$has_roadmap" -eq 1 ]]; then
+        if [[ "$DRY_RUN" -eq 1 ]]; then
+            ui_info "[dry-run] would ensure roadmap state if missing: $(roadmap_state_path "$target")"
+        else
+            ensure_roadmap_state "$target"
+        fi
+    fi
+
     # Stage: config + manifest (manifest LAST — design §5.2).
     if [[ "$DRY_RUN" -eq 1 ]]; then
         ui_info "[dry-run] would write config:   $(config_path "$target")"
@@ -311,7 +325,12 @@ main() {
     ui_info "Next steps:"
     ui_info "  1. cd $target"
     ui_info "  2. Launch opencode."
-    ui_info "  3. Run /sdd <request> to start the gated Spec Kit flow."
+    if [[ "$has_roadmap" -eq 1 ]]; then
+        ui_info "  3. Run /roadmap init <roadmap-file> to build the feature queue,"
+        ui_info "     or /sdd <request> for a single feature outside the queue."
+    else
+        ui_info "  3. Run /sdd <request> to start the gated Spec Kit flow."
+    fi
     return 0
 }
 

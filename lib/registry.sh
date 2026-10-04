@@ -19,7 +19,9 @@
 #   catalog_resolve <type:id>        Print "<repo|vendor>\t<path>".
 #   profile_json <name>              Print the profile JSON.
 #   profile_exists <name>            Return 0 when the profile file exists.
-#   profile_components <name>        Print component IDs, one per line.
+#   profile_components <name>        Print component IDs (extends chain resolved,
+#                                    deduplicated), one per line.
+#   profile_settings <name>          Print merged settings (extends chain resolved).
 #   registry_available_profiles      Print available profile names, one per line.
 #
 # Exported variables
@@ -64,6 +66,7 @@ _registry_type_key() {
         subagent) printf 'subagents\n' ;;
         command)  printf 'commands\n' ;;
         tool)     printf 'tools\n' ;;
+        script)   printf 'scripts\n' ;;
         context)  printf 'contexts\n' ;;
         *)        printf '\n' ;;
     esac
@@ -137,17 +140,77 @@ profile_json() {
     jq -e . "$file"
 }
 
-# profile_components <name> — print the profile's component IDs, one per line.
-# Accepts both string entries and objects with an `id` field.
-profile_components() {
-    local name="$1"
-    local file
+# _registry_profile_extends <name> — print the profile's parent name ("" if none).
+_registry_profile_extends() {
+    jq -r '.extends // ""' "$(_registry_profile_file "$1")" 2>/dev/null
+}
+
+# _profile_components_walk <name> [chain] — print parent components first, then
+# the profile's own. Detects unknown parents and extends cycles.
+_profile_components_walk() {
+    local name="$1" chain="${2:-}"
+    if [[ ",$chain," == *",$name,"* ]]; then
+        printf 'registry: profile extends cycle detected at: %s\n' "$name" >&2
+        return 1
+    fi
+    local file parent
     file="$(_registry_profile_file "$name")"
-    if [[ ! -f "$file" ]]; then
+    parent="$(_registry_profile_extends "$name")"
+    if [[ -n "$parent" && "$parent" != "null" ]]; then
+        if ! profile_exists "$parent"; then
+            printf 'registry: profile %s extends unknown profile: %s\n' "$name" "$parent" >&2
+            return 1
+        fi
+        _profile_components_walk "$parent" "${chain:+$chain,}$name" || return 1
+    fi
+    jq -r '(.components // [])[] | if type == "string" then . else .id end' "$file"
+}
+
+# profile_components <name> — print the resolved component IDs, one per line:
+# the extends chain is resolved parent-first and duplicates are dropped (first
+# occurrence wins). Accepts both string entries and objects with an `id` field.
+profile_components() {
+    local name="$1" ids
+    if [[ ! -f "$(_registry_profile_file "$name")" ]]; then
         printf 'registry: unknown profile: %s\n' "$name" >&2
         return 1
     fi
-    jq -r '(.components // [])[] | if type == "string" then . else .id end' "$file"
+    ids="$(_profile_components_walk "$name")" || return 1
+    printf '%s\n' "$ids" | awk 'NF && !seen[$0]++'
+}
+
+# _profile_settings_walk <name> [chain] — print merged settings for a profile:
+# parent settings first, then the profile's own layered over them (deep merge).
+_profile_settings_walk() {
+    local name="$1" chain="${2:-}"
+    if [[ ",$chain," == *",$name,"* ]]; then
+        printf 'registry: profile extends cycle detected at: %s\n' "$name" >&2
+        return 1
+    fi
+    local file parent base own
+    file="$(_registry_profile_file "$name")"
+    parent="$(_registry_profile_extends "$name")"
+    own="$(jq -c '.settings // {}' "$file")"
+    if [[ -n "$parent" && "$parent" != "null" ]]; then
+        if ! profile_exists "$parent"; then
+            printf 'registry: profile %s extends unknown profile: %s\n' "$name" "$parent" >&2
+            return 1
+        fi
+        base="$(_profile_settings_walk "$parent" "${chain:+$chain,}$name")" || return 1
+        jq -n --argjson base "$base" --argjson own "$own" '$base * $own'
+    else
+        printf '%s\n' "$own"
+    fi
+}
+
+# profile_settings <name> — print the resolved settings JSON for a profile.
+profile_settings() {
+    local name="$1"
+    if [[ ! -f "$(_registry_profile_file "$name")" ]]; then
+        printf 'registry: unknown profile: %s\n' "$name" >&2
+        return 1
+    fi
+    _profile_settings_walk "$name"
 }
 
 # registry_available_profiles — print available profile names, one per line.

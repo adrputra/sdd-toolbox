@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "schema_version": "2.0.0",
   "components": {
     "agents": [
@@ -12,9 +12,30 @@
         "category": "core",
         "tags": ["sdd", "spec-kit", "driver", "orchestration", "waves"],
         "version": "0.3.0"
+      },
+      {
+        "id": "roadmap-driver",
+        "name": "Roadmap Driver",
+        "type": "agent",
+        "path": "components/agent/core/roadmap-driver.md",
+        "description": "Primary agent that walks a roadmap document feature by feature on top of the Spec Kit inner loop, with per-feature checkpoints, git commits, journaling, and a headless loop runner.",
+        "category": "core",
+        "tags": ["roadmap", "orchestration", "checkpoints", "loop"],
+        "version": "0.1.0"
       }
     ],
-    "subagents": [],
+    "subagents": [
+      {
+        "id": "feature-runner",
+        "name": "FeatureRunner",
+        "type": "subagent",
+        "path": "components/agent/subagents/core/feature-runner.md",
+        "description": "Executes exactly one roadmap feature through the full Spec Kit inner loop (specify, analysis, plan, tasks, waves, converge) and returns COMPLETE or BLOCKED; never asks the owner and never edits the state file.",
+        "category": "roadmap",
+        "tags": ["roadmap", "feature", "spec-kit", "inner-loop"],
+        "version": "0.1.0"
+      }
+    ],
     "commands": [
       {
         "id": "sdd",
@@ -25,9 +46,31 @@
         "category": "core",
         "tags": ["sdd", "spec-kit", "entrypoint"],
         "version": "0.1.0"
+      },
+      {
+        "id": "roadmap",
+        "name": "Roadmap",
+        "type": "command",
+        "path": "components/command/roadmap.md",
+        "description": "Entry command routing /roadmap <request> to the roadmap-driver agent: init, next, status, approve, resume, milestone.",
+        "category": "roadmap",
+        "tags": ["roadmap", "entrypoint", "checkpoints"],
+        "version": "0.1.0"
       }
     ],
     "tools": [],
+    "scripts": [
+      {
+        "id": "roadmap-loop",
+        "name": "Roadmap Loop Runner",
+        "type": "script",
+        "path": "components/script/loop.sh",
+        "description": "Headless roadmap runner: drives the roadmap-driver agent iteration by iteration with --feature, --approve, and --auto-checkpoint; exits 2 on a pending checkpoint and 3 on a blocker.",
+        "category": "roadmap",
+        "tags": ["roadmap", "headless", "loop", "script"],
+        "version": "0.1.0"
+      }
+    ],
     "contexts": [
       {
         "id": "spec-kit-navigation",
@@ -77,6 +120,16 @@
         "description": "Evidence rules: no completion claim without fresh command output, and the verdict format for bug-fix flows.",
         "category": "spec-kit",
         "tags": ["sdd", "spec-kit", "evidence", "verification"],
+        "version": "0.1.0"
+      },
+      {
+        "id": "roadmap-loop-protocol",
+        "name": "Roadmap Loop Protocol",
+        "type": "context",
+        "path": "components/context/roadmap/loop-protocol.md",
+        "description": "Canonical roadmap outer-loop protocol: state schema, initialization, eligibility, checkpoints, report schema, journal/commits, headless behavior, and boundaries.",
+        "category": "roadmap",
+        "tags": ["roadmap", "protocol", "checkpoints", "loop"],
         "version": "0.1.0"
       },
       {

@@ -12,6 +12,7 @@
 #   hash_file <file>                 Print the sha256 hex of <file>.
 #   manifest_path <target>           Print <target>/.sdd-toolbox/manifest.json.
 #   config_path <target>             Print <target>/.sdd-toolbox/config.json.
+#   roadmap_state_path <target>      Print <target>/.sdd-toolbox/roadmap.json.
 #   manifest_exists <target>         Return 0 when the manifest file exists.
 #   manifest_field <target> <jq>     Print `jq -r <jq>` from the manifest.
 #   config_field <target> <jq>       Print `jq -r <jq>` from the config.
@@ -59,6 +60,11 @@ manifest_path() {
 # config_path <target> — print the config path for a target.
 config_path() {
     printf '%s/.sdd-toolbox/config.json\n' "${1%/}"
+}
+
+# roadmap_state_path <target> — print the roadmap state path for a target.
+roadmap_state_path() {
+    printf '%s/.sdd-toolbox/roadmap.json\n' "${1%/}"
 }
 
 # manifest_exists <target> — return 0 when the target manifest exists.
