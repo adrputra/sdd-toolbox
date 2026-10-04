@@ -6,9 +6,10 @@
 # Purpose
 #   Map catalog references to target paths, plan/execute installs, and assemble
 #   the config + ownership manifest (design §7.1, §7.2, §11). Path mapping:
-#     repo   components/<rest> -> target .opencode/<rest>   (source under repo)
-#     vendor .opencode/<rest>  -> target .opencode/<rest>   (source under
-#                                vendor/oac/)
+#     repo   components/<rest>        -> target .opencode/<rest>  (source under repo)
+#     repo   components/script/<rest> -> target scripts/<rest>    (source under repo)
+#     vendor .opencode/<rest>         -> target .opencode/<rest>  (source under
+#                                    vendor/oac/)
 #
 # Exported functions
 #   plan_install <target> <ids_csv>
@@ -30,6 +31,9 @@
 #       a user-modified config (hash differs from manifest) is preserved.
 #   write_manifest_file <target> <profile_name> <extensions_csv> <files_json>
 #       Assemble and write the manifest per design §7.1.
+#   ensure_roadmap_state <target>
+#       Create `.sdd-toolbox/roadmap.json` from the scaffold when missing.
+#       Agent/owner-owned state: never manifest-managed, never overwritten.
 #   fail_overlay <msg...>   Print to stderr and exit 6 (overlay stage).
 #
 # Dependencies (lazily sourced from this directory): lib/manifest.sh,
@@ -72,7 +76,10 @@ _overlay_resolve_one() {
     origin="${resolved%%$'\t'*}"
     rel="${resolved#*$'\t'}"
     if [[ "$origin" == "repo" ]]; then
-        trel=".opencode/${rel#components/}"
+        case "$rel" in
+            components/script/*) trel="scripts/${rel#components/script/}" ;;
+            *)                   trel=".opencode/${rel#components/}" ;;
+        esac
         src="${TOOLBOX_ROOT%/}/$rel"
         kind="component"
     else
@@ -248,7 +255,7 @@ write_config() {
     _installer_ensure_deps
     local target="$1" profile="$2" overrides="${3:-}" settings merged cfg path msha
     profile_exists "$profile" || fail_overlay "unknown profile: $profile"
-    settings="$(profile_json "$profile" | jq '.settings // {}')"
+    settings="$(profile_settings "$profile")" || fail_overlay "cannot resolve settings for profile: $profile"
     if [[ -n "$overrides" ]]; then
         merged="$(jq -n --argjson base "$settings" --argjson ov "$overrides" '$base * $ov')" \
             || fail_overlay "invalid overrides JSON"
@@ -294,5 +301,44 @@ write_manifest_file() {
         || { rm -f "$tmp"; fail_overlay "cannot assemble manifest JSON"; }
     write_manifest "$target" "$tmp" || { rm -f "$tmp"; fail_overlay "cannot write manifest"; }
     rm -f "$tmp"
+    return 0
+}
+
+# ensure_roadmap_state <target> — create the roadmap state scaffold when the
+# file is missing. The state is agent/owner-owned (features, decisions, run
+# history), so it is never manifest-managed and never overwritten.
+ensure_roadmap_state() {
+    _installer_ensure_deps
+    local target="$1" path project created
+    path="$(roadmap_state_path "$target")"
+    if [[ -f "$path" ]]; then
+        return 0
+    fi
+    project="$(basename "$(cd "$target" && pwd)")"
+    created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    mkdir -p "$(dirname "$path")" || fail_overlay "cannot create $(dirname "$path")"
+    jq -n --arg project "$project" --arg created "$created" '{
+        schema: 1,
+        project: $project,
+        source: "ROADMAP.md",
+        created_at: $created,
+        updated_at: $created,
+        active_milestone: "",
+        journal_dir: ".sdd-toolbox/journal",
+        policy: {
+            gates: "checkpoint-per-feature",
+            auto_approve_phases: ["specify", "plan", "tasks"],
+            require_clean_analysis: true,
+            feature_checkpoint: "human",
+            stop_on_validation_failure: true,
+            max_attempts_per_feature: 2,
+            commit_per_feature: true,
+            commit_prefix: "feat"
+        },
+        bootstrap: {},
+        owner_decisions: [],
+        features: [],
+        last_run: null
+    }' > "$path" || fail_overlay "cannot write roadmap state: $path"
     return 0
 }

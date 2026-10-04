@@ -18,6 +18,8 @@
 #   9 existing opencode.json -> context7 merged, other content preserved
 #  10 existing context7 entry -> left byte-identical
 #  11 invalid opencode.json -> warn, unchanged, install still succeeds
+#  12 roadmap profile -> overlay files, script, scaffold, no Spec Kit errors
+#  13 modified roadmap.json -> preserved by --update (never manifest-managed)
 #
 # Runnable standalone from anywhere. Exit codes: 0 all scenarios passed;
 # 1 one or more scenarios failed.
@@ -258,6 +260,51 @@ after_hash="$(hash_file "$T11/opencode.json")"
 [[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
 [[ "$before_hash" == "$after_hash" ]] && ok "invalid file left unchanged" || bad "invalid file left unchanged"
 grep -q 'not valid JSON' "$LAST_OUT" && ok "warning reported" || bad "warning reported"
+scenario_end
+
+# ===========================================================================
+# Scenario 12 — roadmap profile
+scenario_begin "Scenario 12: roadmap profile -> loop components + state scaffold"
+T12="$SCRATCH/s12"; mkdir -p "$T12"
+rc=0; run_bootstrap "$T12" --profile roadmap --yes || rc=$?
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc; $(tail -n 2 "$LAST_OUT" | tr '\n' ' '))"
+for f in .opencode/agent/core/roadmap-driver.md \
+         .opencode/agent/subagents/core/feature-runner.md \
+         .opencode/command/roadmap.md \
+         .opencode/context/roadmap/loop-protocol.md; do
+    [[ -f "$T12/$f" ]] && ok "present $f" || bad "present $f"
+done
+[[ -f "$T12/.opencode/agent/core/spec-kit-driver.md" ]] \
+    && ok "inherited minimal component installed" || bad "inherited minimal component installed"
+[[ -x "$T12/scripts/loop.sh" ]] && ok "scripts/loop.sh executable" || bad "scripts/loop.sh executable"
+jq -e '.profile == "roadmap"' "$T12/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+    && ok "manifest profile roadmap" || bad "manifest profile roadmap"
+jq -e '.files[] | select(.component == "script:roadmap-loop" and .path == "scripts/loop.sh")' \
+    "$T12/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+    && ok "script recorded in manifest" || bad "script recorded in manifest"
+[[ "$(basename "$T12")" == "$(jq -r '.project' "$T12/.sdd-toolbox/roadmap.json")" ]] \
+    && ok "roadmap state project name" || bad "roadmap state project name"
+jq -e '.source == "ROADMAP.md" and .features == [] and (.policy.commit_prefix == "feat")' \
+    "$T12/.sdd-toolbox/roadmap.json" >/dev/null 2>&1 \
+    && ok "roadmap state scaffold valid" || bad "roadmap state scaffold valid"
+jq -e '.wave_strategy == "auto" and .parallel_threshold == 5' "$T12/.sdd-toolbox/config.json" >/dev/null 2>&1 \
+    && ok "settings inherited from minimal" || bad "settings inherited from minimal"
+jq -e '[.files[].path] | index(".sdd-toolbox/roadmap.json") == null' "$T12/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+    && ok "roadmap state not manifest-managed" || bad "roadmap state not manifest-managed"
+scenario_end
+
+# ===========================================================================
+# Scenario 13 — modified roadmap state survives --update
+scenario_begin "Scenario 13: modified roadmap.json -> preserved by --update"
+T13="$SCRATCH/s13"; mkdir -p "$T13"
+run_bootstrap "$T13" --profile roadmap --yes || true
+jq '.owner_decisions += [{at: "t", feature: "F001", decision: "keep me", detail: "d"}]' \
+    "$T13/.sdd-toolbox/roadmap.json" > "$T13/.sdd-toolbox/roadmap.json.tmp" \
+    && mv "$T13/.sdd-toolbox/roadmap.json.tmp" "$T13/.sdd-toolbox/roadmap.json"
+rc=0; run_bootstrap "$T13" --profile roadmap --yes --update || rc=$?
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
+jq -e '.owner_decisions | length == 1' "$T13/.sdd-toolbox/roadmap.json" >/dev/null 2>&1 \
+    && ok "owner decisions preserved" || bad "owner decisions preserved"
 scenario_end
 
 # ===========================================================================

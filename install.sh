@@ -40,7 +40,8 @@ Usage:
 
 Common bootstrap options (forwarded verbatim):
   <target-dir>        directory to install into (default: current directory)
-  --profile <name>    profile to install (minimal | go-backend | node-typescript)
+  --profile <name>    profile to install (minimal | go-backend | node-typescript |
+                      roadmap | roadmap-node-typescript)
   --yes               non-interactive; assume yes for all prompts
   --update            update an existing install
   --force             with --update: reinstall (overwrite modified files)

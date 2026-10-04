@@ -1,0 +1,13 @@
+{
+  "name": "roadmap",
+  "extends": "minimal",
+  "description": "Minimal Spec Kit SDD flow plus the roadmap outer loop: roadmap-driver, FeatureRunner, /roadmap command, loop protocol, and the headless scripts/loop.sh runner.",
+  "components": [
+    "agent:roadmap-driver",
+    "subagent:feature-runner",
+    "command:roadmap",
+    "context:roadmap-loop-protocol",
+    "script:roadmap-loop"
+  ],
+  "settings": {}
+}
