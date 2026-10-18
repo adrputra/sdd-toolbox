@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "schema_version": "2.0.0",
   "components": {
     "agents": [
@@ -10,7 +10,13 @@
         "path": "components/agent/core/spec-kit-driver.md",
         "description": "Primary agent that orchestrates GitHub Spec Kit's SDD workflow with mandatory review gates, a pre-plan requirements-analysis pass, and dependency-ordered parallel wave execution.",
         "category": "core",
-        "tags": ["sdd", "spec-kit", "driver", "orchestration", "waves"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "driver",
+          "orchestration",
+          "waves"
+        ],
         "version": "0.3.0"
       },
       {
@@ -20,7 +26,12 @@
         "path": "components/agent/core/roadmap-driver.md",
         "description": "Primary agent that walks a roadmap document feature by feature on top of the Spec Kit inner loop, with per-feature checkpoints, git commits, journaling, and a headless loop runner.",
         "category": "core",
-        "tags": ["roadmap", "orchestration", "checkpoints", "loop"],
+        "tags": [
+          "roadmap",
+          "orchestration",
+          "checkpoints",
+          "loop"
+        ],
         "version": "0.1.0"
       }
     ],
@@ -32,7 +43,28 @@
         "path": "components/agent/subagents/core/feature-runner.md",
         "description": "Executes exactly one roadmap feature through the full Spec Kit inner loop (specify, analysis, plan, tasks, waves, converge) and returns COMPLETE or BLOCKED; never asks the owner and never edits the state file.",
         "category": "roadmap",
-        "tags": ["roadmap", "feature", "spec-kit", "inner-loop"],
+        "tags": [
+          "roadmap",
+          "feature",
+          "spec-kit",
+          "inner-loop"
+        ],
+        "version": "0.1.0"
+      },
+      {
+        "id": "visual-qa-gate",
+        "name": "VisualQA",
+        "type": "subagent",
+        "path": "components/agent/subagents/code/visual-qa.md",
+        "description": "Independent visual quality gate for UI work: captures rendered evidence, inspects screenshots against the design contract, runs the impeccable detector and project a11y/perf gates, and returns PASS/FAIL/UNABLE; never edits product code.",
+        "category": "ui",
+        "tags": [
+          "ui",
+          "visual-qa",
+          "design",
+          "screenshots",
+          "quality-gate"
+        ],
         "version": "0.1.0"
       }
     ],
@@ -44,7 +76,11 @@
         "path": "components/command/sdd.md",
         "description": "Entry command routing /sdd <request> to the spec-kit-driver agent.",
         "category": "core",
-        "tags": ["sdd", "spec-kit", "entrypoint"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "entrypoint"
+        ],
         "version": "0.1.0"
       },
       {
@@ -54,7 +90,26 @@
         "path": "components/command/roadmap.md",
         "description": "Entry command routing /roadmap <request> to the roadmap-driver agent: init, next, status, approve, resume, milestone.",
         "category": "roadmap",
-        "tags": ["roadmap", "entrypoint", "checkpoints"],
+        "tags": [
+          "roadmap",
+          "entrypoint",
+          "checkpoints"
+        ],
+        "version": "0.1.0"
+      },
+      {
+        "id": "loop-advance",
+        "name": "Loop Advance",
+        "type": "command",
+        "path": "components/command/loop_advance.md",
+        "description": "Entry command that launches the headless roadmap loop in the background and advances through milestones with --advance-milestone.",
+        "category": "roadmap",
+        "tags": [
+          "roadmap",
+          "headless",
+          "milestone",
+          "entrypoint"
+        ],
         "version": "0.1.0"
       }
     ],
@@ -65,10 +120,48 @@
         "name": "Roadmap Loop Runner",
         "type": "script",
         "path": "components/script/loop.sh",
-        "description": "Headless roadmap runner: drives the roadmap-driver agent iteration by iteration with --feature, --approve, and --auto-checkpoint; exits 2 on a pending checkpoint and 3 on a blocker.",
+        "description": "Headless roadmap runner: drives the roadmap-driver agent iteration by iteration with --feature, --approve, --auto-checkpoint, --advance-milestone, and --through; exits 2 on a pending checkpoint and 3 on a blocker.",
         "category": "roadmap",
-        "tags": ["roadmap", "headless", "loop", "script"],
+        "tags": [
+          "roadmap",
+          "headless",
+          "loop",
+          "script"
+        ],
+        "version": "0.2.0"
+      }
+    ],
+    "skills": [
+      {
+        "id": "visual-qa",
+        "name": "Visual QA",
+        "type": "skill",
+        "path": "components/skill/visual-qa/SKILL.md",
+        "description": "Browser-based visual verification: captures desktop/tablet/mobile screenshots, runs the impeccable detector, and reports evidence-based CRITICAL/HIGH/MEDIUM/LOW findings.",
+        "category": "ui",
+        "tags": [
+          "ui",
+          "visual-qa",
+          "playwright",
+          "screenshots"
+        ],
         "version": "0.1.0"
+      },
+      {
+        "id": "impeccable",
+        "name": "Impeccable",
+        "type": "skill",
+        "path": "components/skill/impeccable",
+        "description": "Design craft skill: setup/context discovery, craft floor, UX/a11y/performance audits, and the mechanical detector used by VisualQA.",
+        "category": "ui",
+        "tags": [
+          "ui",
+          "design",
+          "audit",
+          "detector",
+          "craft-floor"
+        ],
+        "version": "4.4.0"
       }
     ],
     "contexts": [
@@ -79,7 +172,11 @@
         "path": "components/context/spec-kit/navigation.md",
         "description": "Map of the driver context files, when to load each, and where the runtime config and Spec Kit artifacts live.",
         "category": "spec-kit",
-        "tags": ["sdd", "spec-kit", "navigation"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "navigation"
+        ],
         "version": "0.1.0"
       },
       {
@@ -89,7 +186,12 @@
         "path": "components/context/spec-kit/workflow.md",
         "description": "Full command sequence, gate protocol, requirements-analysis pass, and bug-fix flow for the spec-kit-driver.",
         "category": "spec-kit",
-        "tags": ["sdd", "spec-kit", "workflow", "gates"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "workflow",
+          "gates"
+        ],
         "version": "0.1.0"
       },
       {
@@ -99,7 +201,11 @@
         "path": "components/context/spec-kit/artifacts.md",
         "description": "Spec Kit on-disk layout (.specify/, specs/<###-feature>/) and feature-directory resolution via .specify/feature.json and SPECIFY_FEATURE_DIRECTORY.",
         "category": "spec-kit",
-        "tags": ["sdd", "spec-kit", "artifacts"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "artifacts"
+        ],
         "version": "0.1.0"
       },
       {
@@ -109,7 +215,12 @@
         "path": "components/context/spec-kit/wave-execution.md",
         "description": "Task-parsing rules, DAG/wave computation, sidecar schema, dispatch thresholds, live ticking, validation, stop rules, and converge re-planning.",
         "category": "spec-kit",
-        "tags": ["sdd", "spec-kit", "waves", "execution"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "waves",
+          "execution"
+        ],
         "version": "0.1.0"
       },
       {
@@ -119,7 +230,12 @@
         "path": "components/context/spec-kit/evidence.md",
         "description": "Evidence rules: no completion claim without fresh command output, and the verdict format for bug-fix flows.",
         "category": "spec-kit",
-        "tags": ["sdd", "spec-kit", "evidence", "verification"],
+        "tags": [
+          "sdd",
+          "spec-kit",
+          "evidence",
+          "verification"
+        ],
         "version": "0.1.0"
       },
       {
@@ -129,7 +245,27 @@
         "path": "components/context/roadmap/loop-protocol.md",
         "description": "Canonical roadmap outer-loop protocol: state schema, initialization, eligibility, checkpoints, report schema, journal/commits, headless behavior, and boundaries.",
         "category": "roadmap",
-        "tags": ["roadmap", "protocol", "checkpoints", "loop"],
+        "tags": [
+          "roadmap",
+          "protocol",
+          "checkpoints",
+          "loop"
+        ],
+        "version": "0.1.0"
+      },
+      {
+        "id": "design-brief",
+        "name": "Site Design Brief",
+        "type": "context",
+        "path": "components/context/design/site-design-brief.md",
+        "description": "Project design contract: locked visual/typography/color/layout/component rules and unresolved placeholders that UI work must honor.",
+        "category": "ui",
+        "tags": [
+          "ui",
+          "design",
+          "contract",
+          "constraints"
+        ],
         "version": "0.1.0"
       },
       {
@@ -139,7 +275,11 @@
         "path": "components/context/typescript/standards.md",
         "description": "TypeScript conventions for Node.js projects: strict compiler discipline, type modeling, ESM imports, async/error handling, naming, and testing expectations.",
         "category": "typescript",
-        "tags": ["typescript", "node", "standards"],
+        "tags": [
+          "typescript",
+          "node",
+          "standards"
+        ],
         "version": "0.1.0"
       }
     ]

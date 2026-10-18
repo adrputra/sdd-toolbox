@@ -1,0 +1,12 @@
+{
+  "name": "roadmap-node-typescript-ui",
+  "extends": "roadmap-node-typescript",
+  "description": "Roadmap + Node.js/TypeScript SDD flow plus the visual QA layer: VisualQA gate, visual-qa and impeccable skills, the site design brief, and /loop_advance.",
+  "components": [
+    "subagent:visual-qa-gate",
+    "skill:visual-qa",
+    "skill:impeccable",
+    "context:design-brief"
+  ],
+  "settings": {}
+}

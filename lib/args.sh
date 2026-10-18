@@ -46,7 +46,8 @@ Arguments:
 
 Options:
   --profile <name>     Non-interactive profile selection (e.g. minimal, go-backend,
-                       node-typescript, roadmap, roadmap-node-typescript).
+                       node-typescript, node-typescript-ui, roadmap,
+                       roadmap-node-typescript, roadmap-node-typescript-ui).
   --yes                Assume yes for all prompts (implies non-interactive).
   --update             Update mode; requires an existing toolbox manifest.
   --force              With --update: reinstall mode (overwrite modified files).

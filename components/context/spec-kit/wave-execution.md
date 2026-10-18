@@ -104,6 +104,13 @@ Every worker prompt carries:
 - the project's required context files (discover with `ContextScout` when
   unclear).
 
+**UI tasks** additionally carry the UI worker protocol — the prompt must state:
+"This task is UI. Load the `impeccable` skill and follow its Setup for the
+target app; read `reference/craft-floor.md` before editing; honor
+`.opencode/context/design/site-design-brief.md` when present (locked sections
+are hard constraints, placeholders unresolved); run `impeccable detect` on the
+changed UI before handoff."
+
 Independent tasks within a wave run concurrently. A task whose dependencies are
 not yet `[x]` must not be dispatched.
 
@@ -113,20 +120,66 @@ The moment a task completes, flip its checkbox in `tasks.md`: `- [ ] T00x` →
 `- [x] T00x`. This is the only direct write to a Spec Kit file, and it keeps the
 artifact the single source of truth. Do not batch ticks to the end of a wave.
 
-## 7. Validation after each wave
+## 7. Validation — per wave vs. checkpoint
 
-Run the configured validation commands:
+Two levels, deliberately: cheap while iterating, complete before `COMPLETE`.
 
-- `.sdd-toolbox/config.json` → `validation.commands` (array). Empty → profile
-  default (e.g. `go-backend`: `go vet ./...` then
-  `go test -race -count=1 ./...`; `node-typescript`: `npx tsc --noEmit` then
-  `npm test`).
-- `minimal` profile: no commands (converge still runs).
+**Per wave (scoped, after each wave):** run only the checks that cover the
+changed files — the feature's per-story "Independent Test" commands,
+changed-file test runs (`vitest run --changed` / `--related <file>`, or the
+project's equivalent), and the package-scoped `lint`/`typecheck` for the
+packages you touched. Build/test cache hits are fine here; do **not** force a
+cold run while iterating. Do **not** run the whole-repo suite, the whole
+browser matrix, or the visual QA capture per wave.
 
-Run commands from the repo root (or the configured `scope`). Capture fresh
-output — see [`evidence.md`](evidence.md).
+**At the feature checkpoint (once, fresh, before `COMPLETE`):** run the full
+configured `validation.commands` (`.sdd-toolbox/config.json` →
+`validation.commands` array; empty → profile default) in a single pass from the
+repo root (or the configured `scope`), plus the project's quality/coverage
+gates and the affected e2e suite once. Capture fresh output — see
+[`evidence.md`](evidence.md).
 
-## 8. Stop rules
+A fixed failure re-runs only the affected scope, then the full checkpoint pass
+again before reporting. This is a **redundancy** rule, not a coverage
+reduction: no gate is dropped, no test is weakened, and any failing command
+still stops the run. Machine validation is necessary but not sufficient for UI
+waves: the rendered result is verified by the single Visual QA pass in §8.
+
+## 8. Visual QA for UI work
+
+A wave/feature is **UI-touching** when the tasks or changed files include
+presentation surfaces: UI app code (HTML, Astro/TSX/JSX, Vue/Svelte), CSS/SCSS,
+theme tokens, layouts, shared components, public pages, or admin screens.
+API-only, data, infra, and docs-only work is not UI. When the project has a
+design brief, its app/surface paths are authoritative.
+
+- **Mandatory pass**: after the last converge round that changed UI, dispatch
+  `VisualQA` once for the feature's affected surfaces before the feature can be
+  reported `COMPLETE`. Use the project's capture command (typically
+  `<package-manager> visual:qa`; desktop 1440×900 + mobile 390×844 minimum,
+  plus tablet when justified); the full procedure is the `visual-qa` skill.
+- **Exactly once per feature.** One full capture after the last UI-changing
+  round, plus at most one bounded focus pass per completed surface. Do **not**
+  re-run the full matrix after unrelated wave/fix churn — re-run only the
+  surfaces a fix touched. Scope the capture to the changed surfaces plus the
+  standard representative matrix; run the full route matrix only when the change
+  touches global chrome, tokens, layout, or shared components.
+- **Optional focus pass**: a wave that completes a whole surface may get a
+  focused `VisualQA` before the next wave — bounded, one pass.
+- **Payload to `VisualQA`**: feature id, spec dir, target app/surface,
+  affected routes, changed UI files (`git diff --name-only`), prior findings,
+  attempt number.
+- **Verdict handling**: `PASS` -> include it in the feature report; `FAIL` ->
+  dispatch one batch fix to `CoderAgent` with the findings verbatim and re-run
+  `VisualQA` once; still `FAIL` or `UNABLE` -> STOP and report as a blocker
+  (`visual QA failure` / `missing capability`) with the evidence paths.
+- **Evidence**: screenshots (`.visual-qa/screenshots/<viewport>/`) and capture
+  reports + detector output (`.visual-qa/reports/`); the `VISUAL_QA` line in
+  the feature report cites those paths.
+- `VisualQA` never edits product code; fixing stays with the implementing
+  worker, verification stays independent.
+
+## 9. Stop rules
 
 On any validation failure or task failure:
 
@@ -137,7 +190,7 @@ On any validation failure or task failure:
 4. Wait for an explicit selection before continuing. Never auto-fix, never skip
    ahead.
 
-## 9. Converge and re-plan
+## 10. Converge and re-plan
 
 After all waves are green, run the converge capability. If converge appends
 tasks:
@@ -149,7 +202,7 @@ tasks:
 Repeat until converge reports converged or the owner stops. Respect
 `converge_loop: false` in config (single pass, then stop).
 
-## 10. Interruption
+## 11. Interruption
 
 If the owner stops a run, state exactly which tasks are `[x]` and which remain.
 Resuming continues from the first unticked task; recompute waves from the

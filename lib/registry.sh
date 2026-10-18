@@ -68,7 +68,24 @@ _registry_type_key() {
         tool)     printf 'tools\n' ;;
         script)   printf 'scripts\n' ;;
         context)  printf 'contexts\n' ;;
+        skill)    printf 'skills\n' ;;
         *)        printf '\n' ;;
+    esac
+}
+
+# catalog_target_rel <origin> <rel> — map a resolved source path to the target
+# project-relative path. Repo components live under components/; vendored OAC
+# components already carry the .opencode/ prefix.
+catalog_target_rel() {
+    local origin="$1" rel="$2"
+    if [[ "$origin" == "vendor" ]]; then
+        printf '%s\n' "$rel"
+        return 0
+    fi
+    case "$rel" in
+        components/script/*) printf 'scripts/%s\n' "${rel#components/script/}" ;;
+        components/skill/*)  printf '.opencode/skills/%s\n' "${rel#components/skill/}" ;;
+        *)                   printf '.opencode/%s\n' "${rel#components/}" ;;
     esac
 }
 

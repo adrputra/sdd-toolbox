@@ -44,8 +44,9 @@ The driver ships context under `.opencode/context/spec-kit/`:
 | `navigation.md` | Start of any run — the map of everything else. |
 | `workflow.md` | Planning the phase sequence, gates, or bug flow. |
 | `artifacts.md` | Resolving the feature directory or reading Spec Kit files. |
-| `wave-execution.md` | Parsing `tasks.md`, computing waves, dispatching workers. |
+| `wave-execution.md` | Parsing `tasks.md`, computing waves, dispatching workers, Visual QA. |
 | `evidence.md` | Before claiming any phase/task complete. |
+| `../design/site-design-brief.md` | Any UI-touching feature — design constraints (locked vs unlocked). |
 
 Read `navigation.md` first; it links the rest.
 
@@ -75,6 +76,12 @@ Spec Kit's commands. The only exception is ticking task checkboxes in
   never drift silently.
 - **Requirements analysis before plan.** Always run the pre-plan analysis pass
   and surface Open Questions. Never invent an answer.
+- **UI work uses impeccable.** UI-touching work loads the `impeccable` skill
+  and the design brief before editing; never bypass the craft floor or a
+  locked brief section.
+- **UI completion requires Visual QA.** No UI-touching feature is done without
+  a fresh `VisualQA` PASS; a `FAIL` gets one bounded fix + re-check, then
+  blocks. See `wave-execution.md` §8.
 - **Stop on failure.** A failing validation command STOPS the wave. Report,
   propose options, request approval; never auto-fix or advance.
 - **Evidence before claims.** No phase/task is reported complete without fresh
@@ -123,6 +130,7 @@ owner answers by picking from options (or typing a custom answer).
 | `CoderAgent` | Executes one task (parallel within a wave). |
 | `BatchExecutor` | Runs a whole wave of 5+ parallel tasks. |
 | `TestEngineer` | Test authoring (when a task includes tests). |
+| `VisualQA` | Independent visual quality gate for UI work (mandatory before a UI feature is done). |
 | `DocWriter` | Documentation updates. |
 
 ## Runtime Configuration
@@ -179,7 +187,10 @@ Scan `spec.md` for ambiguities, gaps (missing events/edge cases/migrations),
 and conflicts with the existing codebase. Produce an **Open Questions** list.
 For each, issue a `question` call with your proposed options (recommended first)
 — but never fabricate a decision. Resolve via the clarify command when the owner
-approves; unresolved questions block planning for the affected area only.
+approves; unresolved questions block planning for the affected area only. For
+UI-touching features, also check `.opencode/context/design/site-design-brief.md`
+(when present): a dependency on an unlocked bracketed placeholder is an Open
+Question.
 
 ### Plan
 Author `plan.md` via the plan command. Present it.
@@ -244,7 +255,11 @@ this toolbox targets GitLab).
    report the task ID + command + output excerpt, and ask for the recovery
    decision via the `question` tool (options: fix now / revise spec or plan /
    stop).
-6. All waves green → converge; if tasks were appended, recompute and loop.
+6. UI-touching features only: after the last converge round that changed UI,
+   dispatch `VisualQA` for the affected surfaces before reporting done
+   (`wave-execution.md` §8). `PASS` → proceed; `FAIL` → one batch fix + one
+   re-check, then stop; `UNABLE` → stop and report.
+7. All waves green → converge; if tasks were appended, recompute and loop.
 
 Every worker prompt carries: task ID + text, the tasks-file path, the feature
 directory, and the project's required context files.

@@ -6,6 +6,7 @@
     "agent:roadmap-driver",
     "subagent:feature-runner",
     "command:roadmap",
+    "command:loop-advance",
     "context:roadmap-loop-protocol",
     "script:roadmap-loop"
   ],

@@ -10,8 +10,9 @@ at hand.
 |---|---|---|
 | [`workflow.md`](workflow.md) | Planning or executing the phase sequence | Full command order, approval gates, requirements analysis, bug flow |
 | [`artifacts.md`](artifacts.md) | Resolving the feature directory or reading/writing Spec Kit files | `.specify/` layout, `specs/<###-feature>/`, feature resolution |
-| [`wave-execution.md`](wave-execution.md) | Parsing `tasks.md` or dispatching waves | Task regexes, DAG/wave computation, sidecar schema, dispatch, validation, stop rules |
+| [`wave-execution.md`](wave-execution.md) | Parsing `tasks.md` or dispatching waves | Task regexes, DAG/wave computation, sidecar schema, dispatch, UI protocol, validation, Visual QA, stop rules |
 | [`evidence.md`](evidence.md) | Before reporting any phase/task complete | Fresh-output rule, report/verdict format |
+| [`../design/site-design-brief.md`](../design/site-design-brief.md) | Any UI-touching feature — before specify/plan and before dispatching UI tasks | Locked design constraints and unresolved placeholders |
 
 Read order for a fresh run: **navigation → workflow → artifacts**, then load
 `wave-execution.md` when you reach the tasks/implement phases and `evidence.md`
@@ -23,6 +24,7 @@ before any completion claim.
 |---|---|---|
 | `.sdd-toolbox/config.json` | Toolbox | Runtime settings the driver reads before implement |
 | `.sdd-toolbox/waves/<feature>.json` | Toolbox | Wave sidecar (computed plan + source hash) |
+| `.visual-qa/` | VisualQA | Screenshots, detector output, and visual QA reports for UI features |
 | `.sdd-toolbox/manifest.json` | Toolbox | Ownership manifest (installed files + pins) |
 | `.specify/` | Spec Kit | Templates, scripts, constitution, extension config |
 | `specs/<###-feature>/` | Spec Kit | Feature artifacts (`spec.md`, `plan.md`, `tasks.md`, …) |

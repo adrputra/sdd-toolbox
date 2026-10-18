@@ -80,6 +80,7 @@ driver_subagent_id() {
         BatchExecutor) printf 'batch-executor\n' ;;
         TestEngineer)  printf 'test-engineer\n' ;;
         DocWriter)     printf 'documentation\n' ;;
+        VisualQA)      printf 'visual-qa-gate\n' ;;
         *)             printf '\n' ;;
     esac
 }
@@ -127,7 +128,7 @@ if jq -e '.version and .schema_version and (.components | type == "object")' "$R
 else
     fail "registry.json: top-level schema"
 fi
-if jq -e '(.components | has("agents") and has("subagents") and has("commands") and has("tools") and has("scripts") and has("contexts"))' "$REGISTRY" >/dev/null 2>&1; then
+if jq -e '(.components | has("agents") and has("subagents") and has("commands") and has("tools") and has("scripts") and has("skills") and has("contexts"))' "$REGISTRY" >/dev/null 2>&1; then
     pass "registry.json: all component groups present"
 else
     fail "registry.json: all component groups present"
@@ -185,6 +186,8 @@ while IFS= read -r p; do
     [[ -n "$p" ]] || continue
     if [[ -f "$TOOLBOX_ROOT/$p" ]]; then
         pass "registry path exists: $p"
+    elif [[ -d "$TOOLBOX_ROOT/$p" ]] && [[ -n "$(find "$TOOLBOX_ROOT/$p" -type f 2>/dev/null | head -n 1)" ]]; then
+        pass "registry path exists: $p (directory)"
     else
         fail "registry path missing: $p"
     fi
@@ -238,8 +241,10 @@ else
         fi
         if jq -e --arg i "$id" '[.files[] | select(.id == $i and .type == "subagent")] | length > 0' "$BUNDLE" >/dev/null 2>&1; then
             pass "driver subagent $nm -> $id is vendored"
+        elif catalog_resolve "subagent:$id" >/dev/null 2>&1; then
+            pass "driver subagent $nm -> subagent:$id is a custom component"
         else
-            fail "driver subagent $nm -> $id is missing from the vendored subset"
+            fail "driver subagent $nm -> $id is missing from the vendored subset and the registry"
         fi
     done <<< "$names"
 fi

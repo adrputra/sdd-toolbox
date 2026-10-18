@@ -81,8 +81,10 @@ questions, not guesses.
    Resume the same `FeatureRunner` task with the decision.
 5. **Complete.** Re-run the configured validation commands yourself and capture
    fresh output. Verify each acceptance criterion against artifacts or command
-   output. If anything fails or is unproven, treat it as blocked — do not
-   checkpoint.
+   output. For UI-touching features, verify the fresh `VISUAL_QA: PASS` from
+   the report and its evidence paths under `.visual-qa/` (screenshots +
+   reports) before checkpointing. If anything fails or is unproven, treat it
+   as blocked — do not checkpoint.
 6. **Checkpoint.** Set `awaiting_approval`, write the summary (phases,
    validation with exact commands, acceptance status, artifacts, unresolved
    items, spec dir) to the journal, and ask the owner via the `question` tool:
@@ -106,12 +108,19 @@ constitution capability, never by direct write.
   The one exception is an invocation carrying the explicit `AUTO_CHECKPOINT`
   marker (`scripts/loop.sh --auto-checkpoint`): that marker is the owner's
   pre-approval, so commit, mark done, and continue. Without it, stop.
+  Never auto-approve a feature listed in `bootstrap.constitution_amendments`
+  (explicit owner ratification) or marked `owner_pass_required` — even with
+  the marker, create the checkpoint and stop.
 - **Stop on failure.** A failing validation command stops everything. Report
   the exact command and output excerpt, then ask for the recovery decision.
 - **Dependencies are absolute.** Never dispatch a feature whose deps are not
   `done`. One feature at a time.
 - **Specs are the contract.** If implementation contradicts the spec, stop and
   surface it — never drift silently.
+- **UI work uses impeccable.** UI-touching features load the `impeccable` skill
+  and `.opencode/context/design/site-design-brief.md` (when present); no UI
+  feature checkpoints without a fresh `VisualQA` PASS (see
+  `wave-execution.md` §8). Placeholders in the brief are never guessed.
 - **Evidence before claims.** No phase, feature, or commit without fresh output
   captured now. Never say "should work" or "probably".
 - **Bounded writes.** Only `.sdd-toolbox/roadmap.json`, `.sdd-toolbox/journal/`,
@@ -128,7 +137,7 @@ constitution capability, never by direct write.
 | `DocWriter` | Journal/README/doc updates the protocol explicitly allows |
 
 Everything below the feature level belongs to `FeatureRunner`; do not dispatch
-`CoderAgent`, `BatchExecutor`, or `TestEngineer` yourself.
+`CoderAgent`, `BatchExecutor`, `TestEngineer`, or `VisualQA` yourself.
 
 ## Headless behavior
 
@@ -138,3 +147,8 @@ checkpoint print `LOOP: CHECKPOINT F00x` and exit 0; on a blocker print
 `LOOP: MILESTONE <id> DONE` and exit 0. Never continue on red, never wait
 indefinitely. When the invocation carries `AUTO_CHECKPOINT`, checkpoints are
 pre-approved: commit, mark done, and continue to the next eligible feature.
+When it also carries `--advance-milestone` (or `--through Mxx`), the owner
+pre-confirmed milestone switches for the run: when the active milestone has no
+open features, activate the next milestone with pending features (record the
+switch in `owner_decisions`, set `active_milestone`, journal it) and continue.
+Never auto-approve a constitution-amendment or `owner_pass_required` feature.

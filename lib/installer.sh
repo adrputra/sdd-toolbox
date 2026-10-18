@@ -63,7 +63,9 @@ _installer_ensure_deps() {
         # shellcheck source=./manifest.sh
         . "${_INSTALLER_LIB_DIR}/manifest.sh"
     fi
-    if ! type catalog_resolve >/dev/null 2>&1 || ! type profile_json >/dev/null 2>&1; then
+    if ! type catalog_resolve >/dev/null 2>&1 || \
+       ! type catalog_target_rel >/dev/null 2>&1 || \
+       ! type profile_json >/dev/null 2>&1; then
         # shellcheck source=./registry.sh
         . "${_INSTALLER_LIB_DIR}/registry.sh"
     fi
@@ -75,19 +77,31 @@ _overlay_resolve_one() {
     resolved="$(catalog_resolve "$1" 2>/dev/null)" || return 1
     origin="${resolved%%$'\t'*}"
     rel="${resolved#*$'\t'}"
+    trel="$(catalog_target_rel "$origin" "$rel")"
     if [[ "$origin" == "repo" ]]; then
-        case "$rel" in
-            components/script/*) trel="scripts/${rel#components/script/}" ;;
-            *)                   trel=".opencode/${rel#components/}" ;;
-        esac
         src="${TOOLBOX_ROOT%/}/$rel"
         kind="component"
     else
-        trel="$rel"
         src="${TOOLBOX_ROOT%/}/vendor/oac/$rel"
         kind="vendor"
     fi
     printf '%s\t%s\t%s\t%s\t%s\n' "$origin" "$rel" "$trel" "$src" "$kind"
+}
+
+# _overlay_expand <trel> <src> — print "target_rel<TAB>source_abs" per file.
+# File components yield one line; directory components (skills) expand
+# recursively into their target subtree.
+_overlay_expand() {
+    local trel="$1" src="$2" rel f
+    if [[ -d "$src" ]]; then
+        while IFS= read -r f; do
+            [[ -n "$f" ]] || continue
+            rel="${f#"$src"/}"
+            printf '%s/%s\t%s\n' "${trel%/}" "$rel" "$f"
+        done < <(find "$src" -type f | LC_ALL=C sort)
+    else
+        printf '%s\t%s\n' "$trel" "$src"
+    fi
 }
 
 # _installer_copy <src> <dest> — copy, creating parents; preserve +x.
@@ -137,19 +151,22 @@ _overlay_plan() {
             continue
         fi
         IFS=$'\t' read -r origin rel trel src kind <<< "$meta"
-        if [[ ! -f "$src" ]]; then
+        if [[ ! -e "$src" ]]; then
             printf 'source-missing\t%s\t%s\n' "$trel" "$src"
             continue
         fi
-        desired="$(hash_file "$src")"
-        exists=0
-        sha=""
-        if [[ -f "$target/$trel" ]]; then
-            exists=1
-            sha="$(hash_file "$target/$trel")"
-        fi
-        msha="$(_overlay_manifest_sha "$target" "$trel")"
-        printf '%s\t%s\t%s\n' "$(classify_file "$exists" "$sha" "$msha" "$desired")" "$trel" "$src"
+        local ftrel fsrc
+        while IFS=$'\t' read -r ftrel fsrc; do
+            desired="$(hash_file "$fsrc")"
+            exists=0
+            sha=""
+            if [[ -f "$target/$ftrel" ]]; then
+                exists=1
+                sha="$(hash_file "$target/$ftrel")"
+            fi
+            msha="$(_overlay_manifest_sha "$target" "$ftrel")"
+            printf '%s\t%s\t%s\n' "$(classify_file "$exists" "$sha" "$msha" "$desired")" "$ftrel" "$fsrc"
+        done < <(_overlay_expand "$trel" "$src")
     done <<< "$list"
     return 0
 }
@@ -208,12 +225,15 @@ build_managed_files_json() {
         [[ -n "$id" ]] || continue
         meta="$(_overlay_resolve_one "$id")" || continue
         IFS=$'\t' read -r origin rel trel src kind <<< "$meta"
-        [[ -f "$src" ]] || continue
-        sha="$(hash_file "$src")"
-        [[ "$first" -eq 1 ]] || printf ',' >> "$tmp"
-        jq -cn --arg p "$trel" --arg s "$sha" --arg k "$kind" --arg c "$id" \
-            '{path: $p, sha256: $s, source: $k, component: $c}' >> "$tmp"
-        first=0
+        [[ -e "$src" ]] || continue
+        local ftrel fsrc
+        while IFS=$'\t' read -r ftrel fsrc; do
+            sha="$(hash_file "$fsrc")"
+            [[ "$first" -eq 1 ]] || printf ',' >> "$tmp"
+            jq -cn --arg p "$ftrel" --arg s "$sha" --arg k "$kind" --arg c "$id" \
+                '{path: $p, sha256: $s, source: $k, component: $c}' >> "$tmp"
+            first=0
+        done < <(_overlay_expand "$trel" "$src")
     done <<< "$list"
     cfg="$(config_path "$1")"
     if [[ -f "$cfg" ]]; then

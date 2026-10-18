@@ -1,0 +1,12 @@
+{
+  "name": "node-typescript-ui",
+  "extends": "node-typescript",
+  "description": "Node.js/TypeScript SDD flow plus the visual QA layer: VisualQA subagent, visual-qa and impeccable skills, and the site design brief.",
+  "components": [
+    "subagent:visual-qa-gate",
+    "skill:visual-qa",
+    "skill:impeccable",
+    "context:design-brief"
+  ],
+  "settings": {}
+}

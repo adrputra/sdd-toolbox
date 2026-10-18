@@ -52,7 +52,8 @@ _update_ensure_deps() {
         # shellcheck source=./manifest.sh
         . "${_UPDATE_LIB_DIR}/manifest.sh"
     fi
-    if ! type catalog_resolve >/dev/null 2>&1; then
+    if ! type catalog_resolve >/dev/null 2>&1 || \
+       ! type catalog_target_rel >/dev/null 2>&1; then
         # shellcheck source=./registry.sh
         . "${_UPDATE_LIB_DIR}/registry.sh"
     fi
@@ -64,6 +65,30 @@ _update_source_abs() {
         printf '%s/%s\n' "${TOOLBOX_ROOT%/}" "$2"
     else
         printf '%s/vendor/oac/%s\n' "${TOOLBOX_ROOT%/}" "$2"
+    fi
+}
+
+# _update_source_for_manifest <component> <target_rel> — source path for a
+# manifest entry. File components map directly; directory components (skills)
+# map the target path back into their source subtree.
+_update_source_for_manifest() {
+    local component="$1" path="$2" resolved origin rel base trel suffix
+    [[ -n "$component" ]] || return 0
+    resolved="$(catalog_resolve "$component" 2>/dev/null)" || return 0
+    origin="${resolved%%$'\t'*}"
+    rel="${resolved#*$'\t'}"
+    base="$(_update_source_abs "$origin" "$rel")"
+    if [[ -d "$base" ]]; then
+        trel="$(catalog_target_rel "$origin" "$rel")"
+        case "$path" in
+            "$trel"/*)
+                suffix="${path#"$trel"/}"
+                printf '%s/%s\n' "${base%/}" "$suffix" ;;
+            *)
+                printf '%s\n' "$base" ;;
+        esac
+    else
+        printf '%s\n' "$base"
     fi
 }
 
@@ -102,7 +127,7 @@ update_components() {
     local n_skip=0 n_over=0 n_restore=0 n_preserve=0 n_backup=0 n_stale=0 n_gen=0
     while IFS=$'\t' read -r path oldsha source component; do
         [[ -n "$path" ]] || continue
-        local action="skip" newsha="$oldsha" src="" origin="" rel=""
+        local action="skip" newsha="$oldsha" src=""
 
         if [[ "$source" == "generated" ]]; then
             action="generated"
@@ -110,9 +135,7 @@ update_components() {
         else
             local resolved=""
             if [[ -n "$component" ]] && resolved="$(catalog_resolve "$component" 2>/dev/null)"; then
-                origin="${resolved%%$'\t'*}"
-                rel="${resolved#*$'\t'}"
-                src="$(_update_source_abs "$origin" "$rel")"
+                src="$(_update_source_for_manifest "$component" "$path")"
             fi
             if [[ -z "$src" || ! -f "$src" ]]; then
                 action="stale"

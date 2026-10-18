@@ -8,14 +8,15 @@ One command installs the toolchain, records every file it owns, and can safely r
 
 ## Overview
 
-The toolbox installs four layers into a target project (the roadmap loop is opt-in via a roadmap profile):
+The toolbox installs five layers into a target project (the roadmap loop and the visual QA layer are opt-in via profiles):
 
 | Layer | What it is | Where it lands |
 |---|---|---|
 | **Pinned Spec Kit integration** | The official `specify` CLI at the release tag in `versions.env`, initialised for opencode | `.specify/`, `specs/` (Spec Kit-owned) |
 | **Vendored OAC subset** | A pinned OpenAgents Control component subset bundled inside the toolbox and installed offline | `.opencode/…` |
 | **`spec-kit-driver` agent** | The driver agent, its `/sdd` entry command, and `context/spec-kit/` files — review gates plus wave execution on top of Spec Kit | `.opencode/agent/core/`, `.opencode/command/sdd.md`, `.opencode/context/spec-kit/` |
-| **Roadmap loop** (optional) | The `roadmap-driver` agent, the `FeatureRunner` subagent, the `/roadmap` command, the loop protocol, and the headless `scripts/loop.sh` runner | `.opencode/…`, `.opencode/context/roadmap/`, `scripts/loop.sh`, `.sdd-toolbox/roadmap.json` |
+| **Roadmap loop** (optional) | The `roadmap-driver` agent, the `FeatureRunner` subagent, the `/roadmap` and `/loop_advance` commands, the loop protocol, and the headless `scripts/loop.sh` runner | `.opencode/…`, `.opencode/context/roadmap/`, `scripts/loop.sh`, `.sdd-toolbox/roadmap.json` |
+| **Visual QA layer** (optional) | The `VisualQA` subagent, the `visual-qa` and `impeccable` skills, the site design brief, and the UI gates in the SDD loop | `.opencode/agent/subagents/code/`, `.opencode/skills/`, `.opencode/context/design/` |
 
 Ownership is explicit: every file the toolbox writes is tracked in `.sdd-toolbox/manifest.json` with a sha256 hash. Unmanaged files are never touched. Updates refresh unmodified files and preserve your edits (see [Updating](#updating)).
 
@@ -80,8 +81,9 @@ Interactive mode always asks for the profile. Defaults (`target=.`, `profile=min
 | Path | Contents |
 |---|---|
 | `.opencode/…` | driver agent, `/sdd` command, `context/spec-kit/` files, and the vendored OAC subset |
-| `.opencode/…` (roadmap profiles) | `roadmap-driver`, `FeatureRunner`, `/roadmap` command, and `context/roadmap/` files |
-| `scripts/loop.sh` (roadmap profiles) | headless roadmap runner (`--feature`, `--approve`, `--auto-checkpoint`) |
+| `.opencode/…` (roadmap profiles) | `roadmap-driver`, `FeatureRunner`, `/roadmap` and `/loop_advance` commands, and `context/roadmap/` files |
+| `.opencode/…` (UI profiles) | `VisualQA` subagent, `visual-qa` and `impeccable` skills, and `context/design/site-design-brief.md` |
+| `scripts/loop.sh` (roadmap profiles) | headless roadmap runner (`--feature`, `--approve`, `--auto-checkpoint`, `--advance-milestone`, `--through`) |
 | `.sdd-toolbox/roadmap.json` (roadmap profiles) | roadmap state scaffold — created empty when missing, agent/owner-owned, never overwritten or manifest-managed |
 | `.specify/` | Spec Kit integration (templates, scripts, constitution, extension config) — Spec Kit-owned |
 | `specs/` | feature artifacts, created by Spec Kit as features are specified — Spec Kit-owned |
@@ -106,7 +108,7 @@ cd <target>
 | Flag | Meaning |
 |---|---|
 | `<target-dir>` | Directory to install into (default: current directory). |
-| `--profile <name>` | Non-interactive profile selection (`minimal`, `go-backend`, `node-typescript`, `roadmap`, `roadmap-node-typescript`). |
+| `--profile <name>` | Non-interactive profile selection (`minimal`, `go-backend`, `node-typescript`, `node-typescript-ui`, `roadmap`, `roadmap-node-typescript`, `roadmap-node-typescript-ui`). |
 | `--yes` | Assume yes for all prompts (implies non-interactive). |
 | `--update` | Update mode; requires an existing toolbox manifest. |
 | `--force` | With `--update`: reinstall mode (overwrite modified files). |
@@ -129,6 +131,8 @@ A profile is a declarative JSON bundle of components plus runtime settings. Menu
 | `node-typescript` | Everything in `minimal`, plus the review/build subagents, test-coverage and TypeScript standards contexts. | `npx tsc --noEmit` then `npm test` |
 | `roadmap` | Extends `minimal`, plus the roadmap outer loop: `roadmap-driver`, `FeatureRunner`, `/roadmap`, `context/roadmap/`, and `scripts/loop.sh`. | inherited from `minimal` |
 | `roadmap-node-typescript` | Extends `node-typescript`, plus the same roadmap outer loop. | inherited from `node-typescript` |
+| `node-typescript-ui` | Extends `node-typescript`, plus the visual QA layer: `VisualQA`, `visual-qa` + `impeccable` skills, and the site design brief. | inherited from `node-typescript` |
+| `roadmap-node-typescript-ui` | Extends `roadmap-node-typescript`, plus the visual QA layer. | inherited from `roadmap-node-typescript` |
 
 Selecting an unknown profile exits **2** and lists the available profiles.
 
@@ -184,8 +188,12 @@ On implement, the driver parses `tasks.md` (IDs `T###`, `[P]` parallel markers, 
 - `>= parallel_threshold` (default 5): the whole wave goes to `BatchExecutor`.
 - Tasks that include tests use `TestEngineer`.
 - Checkboxes tick `[ ] → [x]` in `tasks.md` immediately as tasks complete.
-- The profile's validation commands run after each wave. On failure the driver **stops**, reports the task ID + command + output excerpt, and asks for the recovery decision via the `question` tool — never auto-fixes or advances.
+- Each wave runs **scoped** validation (changed-file tests plus package-scoped lint/typecheck). The full configured suite runs once, fresh, at the feature checkpoint. On failure the driver **stops**, reports the task ID + command + output excerpt, and asks for the recovery decision via the `question` tool — never auto-fixes or advances.
 - After all waves are green it runs `converge`; appended tasks are re-planned and the loop repeats until converged.
+
+### Visual QA layer
+
+Installed by the UI profiles (`node-typescript-ui`, `roadmap-node-typescript-ui`). UI-touching features load the design brief and the `impeccable` skill before editing; after the last UI-changing converge round, `FeatureRunner` dispatches `VisualQA` once. `VisualQA` captures desktop + mobile screenshots with the project's runner, runs the impeccable detector and the project's a11y/perf gates, inspects the rendered pixels, and returns `PASS` / `FAIL` / `UNABLE` with evidence under `.visual-qa/`. A `FAIL` gets one bounded fix + re-check; still failing (or `UNABLE`) blocks the feature. The shipped `site-design-brief.md` is a template: fill it, resolve the bracketed placeholders, and lock it before relying on it.
 
 ### Runtime configuration
 
@@ -217,7 +225,7 @@ No phase or task is reported complete without fresh command output captured at t
 
 ## Roadmap Loop
 
-Installed only by the `roadmap` and `roadmap-node-typescript` profiles. `/roadmap <request>` is the entry point (the `roadmap` command routes to the `roadmap-driver` agent); it wraps the same Spec Kit inner loop in an outer queue with one human checkpoint per feature, git commits, and a journal.
+Installed only by the roadmap profiles (`roadmap`, `roadmap-node-typescript`, `roadmap-node-typescript-ui`). `/roadmap <request>` is the entry point (the `roadmap` command routes to the `roadmap-driver` agent); it wraps the same Spec Kit inner loop in an outer queue with one human checkpoint per feature, git commits, and a journal. `/loop_advance` launches the headless runner in the background with `--advance-milestone`.
 
 ### Initialize
 
@@ -246,10 +254,12 @@ scripts/loop.sh                       # run until checkpoint (exit 2) or blocker
 scripts/loop.sh --feature F007        # run or resume one feature
 scripts/loop.sh --approve F007        # commit an approved checkpoint and continue
 scripts/loop.sh --auto-checkpoint     # unattended: pre-approve every checkpoint
+scripts/loop.sh --advance-milestone   # also activate the next milestone when one completes
+scripts/loop.sh --through M03         # stop once M03 completes
 scripts/loop.sh --max-iterations 20 --model provider/model --dry-run
 ```
 
-Exit codes: `0` milestone complete, `2` checkpoint pending, `3` blocked, `1` error/stall. `--auto-checkpoint` is the owner's explicit pre-approval for the run; without it the runner stops at every checkpoint and never simulates an answer.
+Exit codes: `0` milestone(s) complete, `2` checkpoint pending, `3` blocked, `1` error/stall. `--auto-checkpoint` is the owner's explicit pre-approval for the run; without it the runner stops at every checkpoint and never simulates an answer. `--advance-milestone` (or `--through Mxx`) is the owner's pre-confirmation to switch to the next milestone when the active one has no open features.
 
 ### State and protocol
 
@@ -268,8 +278,8 @@ scripts/validate.sh      # repo self-check: syntax, schemas, reference integrity
 scripts/smoke-test.sh    # end-to-end bootstrap scenarios into temp dirs
 ```
 
-- `scripts/validate.sh` — offline self-check with per-check output: `bash -n` on every shell file (including `bootstrap.sh`), `shellcheck` on those files when installed (**skipped visibly** — a `[SKIP]` line — when absent), `jq` schema checks for `registry.json`, every `profiles/*.json` (including `extends` targets), `vendor/oac/bundle.json` and `versions.env`, and reference integrity (every profile extends chain resolves; every profile component ID resolves via `catalog_resolve`; every spec-kit-driver subagent exists in the vendored subset and every roadmap-driver subagent resolves in the catalog; every registry path exists on disk; every bundle hash matches). Currently **185 checks**; exits **7** if any check fails and **0** otherwise.
-- `scripts/smoke-test.sh` — thirteen hermetic scenarios: fresh install, idempotency, update-preserve, force+backup, dry-run, unknown profile, `--no-spec-kit`, a stripped-`PATH` prereq failure, three `opencode.json` handling cases, and two roadmap-profile cases (component/script/scaffold install; modified state preserved by `--update`). `uv`/`specify` are stubbed on `PATH` (no network, no global installs), each scenario runs in its own directory under a scratch root that is removed on exit, and the suite exits **1** if any scenario fails.
+- `scripts/validate.sh` — offline self-check with per-check output: `bash -n` on every shell file (including `bootstrap.sh`), `shellcheck` on those files when installed (**skipped visibly** — a `[SKIP]` line — when absent), `jq` schema checks for `registry.json`, every `profiles/*.json` (including `extends` targets), `vendor/oac/bundle.json` and `versions.env`, and reference integrity (every profile extends chain resolves; every profile component ID resolves via `catalog_resolve`; every spec-kit-driver subagent resolves (vendored subset or custom registry) and every roadmap-driver subagent resolves in the catalog; every registry path exists on disk; every bundle hash matches). Currently **253 checks**; exits **7** if any check fails and **0** otherwise.
+- `scripts/smoke-test.sh` — fourteen hermetic scenarios: fresh install, idempotency, update-preserve, force+backup, dry-run, unknown profile, `--no-spec-kit`, a stripped-`PATH` prereq failure, three `opencode.json` handling cases, two roadmap-profile cases (component/script/scaffold install; modified state preserved by `--update`), and a UI-profile case (VisualQA agent, directory-expanded skills, design brief). `uv`/`specify` are stubbed on `PATH` (no network, no global installs), each scenario runs in its own directory under a scratch root that is removed on exit, and the suite exits **1** if any scenario fails.
 
 Tests override the data root with the **`TOOLBOX_ROOT`** environment variable: the code always loads from the script's own directory, but `TOOLBOX_ROOT` points `registry.json`, `profiles/`, `components/`, and `vendor/` at an alternate root (e.g. a fixture tree).
 

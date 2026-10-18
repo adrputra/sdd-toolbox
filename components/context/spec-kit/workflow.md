@@ -33,11 +33,13 @@ Intake
   -> Constitution        (once; skip if present + approved)
   -> Specify             -> GATE
   -> [Clarify | Checklist]   (optional)
-  -> Requirements Analysis   (MANDATORY before plan)
+  -> Requirements Analysis   (MANDATORY before plan; UI: + design-brief check)
   -> Plan                -> GATE
   -> Tasks               -> GATE
   -> [Analyze]               (optional)
-  -> Implement (waves)   -> per-wave validation
+  -> [Design context]        (UI: site design brief + impeccable, before implement)
+  -> Implement (waves)   -> scoped validation
+  -> [Visual QA]             (UI: mandatory before completion; wave-execution §8)
   -> Converge            -> (tasks appended?) -> Implement -> ...
 ```
 
@@ -87,9 +89,22 @@ the wave plan together.
 ### Quality (optional)
 Run `analyze` to cross-check artifacts for consistency before execution.
 
+### Design context (UI features)
+Before implementation, UI-touching features load
+`.opencode/context/design/site-design-brief.md` (when present) and the
+`impeccable` skill. Locked brief sections are hard constraints; bracketed
+placeholders are unresolved and become Open Questions, never guesses. Wave
+worker prompts carry the UI protocol (see [`wave-execution.md`](wave-execution.md) §5).
+
+### Visual QA (UI features, mandatory)
+After implement/converge, dispatch `VisualQA` before reporting completion; a
+`FAIL` gets one bounded fix + re-check, then blocks. Details and verdict
+handling: [`wave-execution.md`](wave-execution.md) §8.
+
 ### Implement
-Run the wave engine in [`wave-execution.md`](wave-execution.md). Validation
-runs after every wave.
+Run the wave engine in [`wave-execution.md`](wave-execution.md). Scoped
+validation runs after every wave; the full configured suite runs once at the
+feature checkpoint.
 
 ### Converge
 Run the converge capability. If it appends tasks, recompute waves from the fresh

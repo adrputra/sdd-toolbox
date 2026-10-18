@@ -187,6 +187,9 @@ The inner loop does not stop for every gate. It applies:
 | Tasks | Auto-approve under the same condition |
 | Feature completion | **Always human** — the orchestrator checkpoints with the owner |
 
+- UI-touching features also require a fresh `VISUAL_QA: PASS` with evidence
+  under `.visual-qa/` before the checkpoint; `FAIL`/`UNABLE` is a blocker, not
+  a caveat.
 - An ambiguity, gap, or conflict is never guessed. Return `BLOCKED` with the
   exact open questions and proposed options.
 - Any validation command failure (inner wave validation or outer re-run) is a
@@ -207,6 +210,7 @@ VALIDATION:
 ACCEPTANCE:
   - <criterion> | met|unmet | evidence: <path or command output ref>
 ARTIFACTS: <paths created/changed>
+VISUAL_QA: <PASS|FAIL|UNABLE | evidence: .visual-qa/> | n/a (non-UI)
 UNRESOLVED: <items or none>
 ```
 
@@ -251,13 +255,19 @@ When invoked by `scripts/loop.sh`:
 - On a feature checkpoint: set `awaiting_approval`, write the checkpoint summary
   to the journal, print `LOOP: CHECKPOINT F00x`, and exit 0.
 - On a blocker: set `blocked`, print `LOOP: BLOCKED F00x <reason>`, exit 0.
-- On milestone completion: print `LOOP: MILESTONE <id> DONE`, exit 0.
+- On milestone completion: print `LOOP: MILESTONE <id> DONE`, exit 0. With
+  `--advance-milestone` (or `--through Mxx`), the owner pre-approved milestone
+  switches for the run: activate the next milestone with pending features,
+  record the switch in `owner_decisions` and the journal, and continue.
 - Never simulate an owner answer. Never auto-approve a checkpoint, with one
   exception: an invocation that explicitly carries the `AUTO_CHECKPOINT` marker
   (the owner launched `scripts/loop.sh --auto-checkpoint`) is pre-approval for
   every feature checkpoint in that run. Treat each completed feature as
   approved: commit, record the sha, set
   `done`, journal it, and continue. Without the marker, stop at checkpoints.
+  Two features always stop for explicit owner action even with the marker: a
+  feature in `bootstrap.constitution_amendments` and a feature marked
+  `owner_pass_required: true` in the state file.
 
 `/roadmap init` is never run headless; a queue must be initialized and approved
 interactively first.

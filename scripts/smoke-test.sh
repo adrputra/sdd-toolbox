@@ -271,6 +271,7 @@ rc=0; run_bootstrap "$T12" --profile roadmap --yes || rc=$?
 for f in .opencode/agent/core/roadmap-driver.md \
          .opencode/agent/subagents/core/feature-runner.md \
          .opencode/command/roadmap.md \
+         .opencode/command/loop_advance.md \
          .opencode/context/roadmap/loop-protocol.md; do
     [[ -f "$T12/$f" ]] && ok "present $f" || bad "present $f"
 done
@@ -305,6 +306,29 @@ rc=0; run_bootstrap "$T13" --profile roadmap --yes --update || rc=$?
 [[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc)"
 jq -e '.owner_decisions | length == 1' "$T13/.sdd-toolbox/roadmap.json" >/dev/null 2>&1 \
     && ok "owner decisions preserved" || bad "owner decisions preserved"
+scenario_end
+
+# ===========================================================================
+# Scenario 14 — visual QA layer profile
+scenario_begin "Scenario 14: UI profile -> VisualQA agent + skills + design brief"
+T14="$SCRATCH/s14"; mkdir -p "$T14"
+rc=0; run_bootstrap "$T14" --profile roadmap-node-typescript-ui --yes --no-spec-kit || rc=$?
+[[ $rc -eq 0 ]] && ok "exit 0" || bad "exit 0 (got $rc; $(tail -n 2 "$LAST_OUT" | tr '\n' ' '))"
+for f in .opencode/agent/subagents/code/visual-qa.md \
+         .opencode/skills/visual-qa/SKILL.md \
+         .opencode/skills/impeccable/SKILL.md \
+         .opencode/skills/impeccable/reference/craft-floor.md \
+         .opencode/context/design/site-design-brief.md; do
+    [[ -f "$T14/$f" ]] && ok "present $f" || bad "present $f"
+done
+[[ -x "$T14/.opencode/skills/impeccable/scripts/impeccable" ]] \
+    && ok "impeccable launcher executable" || bad "impeccable launcher executable"
+jq -e '.files[] | select(.component == "skill:impeccable" and .path == ".opencode/skills/impeccable/SKILL.md")' \
+    "$T14/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+    && ok "directory skill files recorded in manifest" || bad "directory skill files recorded in manifest"
+jq -e '.files[] | select(.component == "subagent:visual-qa-gate")' \
+    "$T14/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+    && ok "VisualQA subagent recorded" || bad "VisualQA subagent recorded"
 scenario_end
 
 # ===========================================================================

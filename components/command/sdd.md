@@ -28,11 +28,16 @@ Procedure:
    tool (numbered text fallback when it is unavailable). Never proceed
    unapproved.
 6. **On implement** — compute and present the wave plan, dispatch 1–4 tasks to
-   parallel `CoderAgent`s (5+ to `BatchExecutor`), tick checkboxes live, run the
-   configured validation after each wave, and STOP on failure.
-7. **Bug requests** — use the bug-fix flow (assess → fix → test) when the bug
+   parallel `CoderAgent`s (5+ to `BatchExecutor`), tick checkboxes live, run
+   scoped validation after each wave, and STOP on failure. Run the full
+   configured suite once at the feature checkpoint.
+7. **UI work** — UI-touching tasks load the `impeccable` skill and
+   `.opencode/context/design/site-design-brief.md` (when present) before
+   editing; before completion, dispatch `VisualQA` and require a fresh `PASS`
+   (one bounded fix + re-check, then stop).
+8. **Bug requests** — use the bug-fix flow (assess → fix → test) when the bug
    extension is installed, ending with a `verified | partial | failed` verdict.
-8. **Report with evidence** — never claim completion without fresh command
+9. **Report with evidence** — never claim completion without fresh command
    output captured at that moment.
 
 If `$ARGUMENTS` is empty, ask the owner what they want to build or fix and run

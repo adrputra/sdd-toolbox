@@ -83,6 +83,7 @@ _wizard_component_options() {
         ((.components.commands // [])[] | "command:\(.id)"),
         ((.components.tools // [])[] | "tool:\(.id)"),
         ((.components.scripts // [])[] | "script:\(.id)"),
+        ((.components.skills // [])[] | "skill:\(.id)"),
         ((.components.contexts // [])[] | "context:\(.id)")' "$reg" 2>/dev/null)"
     [[ -f "$bundle" ]] && vend="$(jq -r '(.files // [])[] | "\(.type):\(.id)"' "$bundle" 2>/dev/null)"
     printf '%s\n%s\n' "$custom" "$vend" | awk 'NF' | sort -u
@@ -98,6 +99,7 @@ _wizard_component_legend() {
         ((.components.commands // [])[] | "  command:\(.id) — \(.description // "")"),
         ((.components.tools // [])[] | "  tool:\(.id) — \(.description // "")"),
         ((.components.scripts // [])[] | "  script:\(.id) — \(.description // "")"),
+        ((.components.skills // [])[] | "  skill:\(.id) — \(.description // "")"),
         ((.components.contexts // [])[] | "  context:\(.id) — \(.description // "")")' "$reg" 2>/dev/null
 }
 

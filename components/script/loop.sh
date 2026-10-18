@@ -5,7 +5,7 @@
 # .sdd-toolbox/roadmap.json, so sessions are interchangeable and resumable.
 #
 # Exit codes:
-#   0  active milestone complete (or nothing left to run)
+#   0  active milestone (or all milestones, with --advance-milestone) complete
 #   2  checkpoint pending — owner approval required
 #   3  blocked — owner decision required
 #   1  error (opencode failure, stall, or unexpected state)
@@ -21,6 +21,8 @@ MODEL=""
 FEATURE=""
 APPROVE=""
 AUTO_CHECKPOINT=false
+ADVANCE_MILESTONE=false
+THROUGH=""
 MAX_ITERATIONS=""
 DRY_RUN=false
 
@@ -32,13 +34,20 @@ Options:
   --feature F00x        Run (or resume) a single feature
   --approve F00x        Owner approval: commit the checkpoint and advance
   --auto-checkpoint     Unattended: pre-approve every feature checkpoint
-                        (commit + continue); stops only on blockers/errors
+                        (commit + continue); stops on blockers/errors and on
+                        features that require explicit owner action
+                        (constitution ratification, owner_pass_required)
+  --advance-milestone   Owner pre-confirmation for this run: when the active
+                        milestone has no open features, activate the next
+                        milestone with pending features and continue
+  --through Mxx         Stop once milestone Mxx completes
+                        (implies --advance-milestone)
   --max-iterations N    Safety cap on opencode invocations (default: derived)
   --model P/M           Model override (provider/model)
   --dry-run             Print what would run; do not invoke opencode
   -h, --help            Show this help
 
-Exit: 0 milestone done | 2 checkpoint pending | 3 blocked | 1 error
+Exit: 0 milestone(s) done | 2 checkpoint pending | 3 blocked | 1 error
 EOF
 }
 
@@ -47,6 +56,8 @@ while [[ $# -gt 0 ]]; do
     --feature) FEATURE="$2"; shift 2 ;;
     --approve) APPROVE="$2"; shift 2 ;;
     --auto-checkpoint) AUTO_CHECKPOINT=true; shift ;;
+    --advance-milestone) ADVANCE_MILESTONE=true; shift ;;
+    --through) THROUGH="$2"; ADVANCE_MILESTONE=true; shift 2 ;;
     --max-iterations) MAX_ITERATIONS="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --dry-run) DRY_RUN=true; shift ;;
@@ -61,6 +72,11 @@ done
 [[ -f "$STATE" ]] || { echo "ERROR: $STATE not found." >&2; exit 1; }
 git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "ERROR: $ROOT is not a git repo." >&2; exit 1; }
 
+if [[ -n "$THROUGH" ]] && ! [[ "$THROUGH" =~ ^M[0-9]+$ ]]; then
+  echo "ERROR: --through expects a milestone id like M27 (got '$THROUGH')." >&2
+  exit 1
+fi
+
 # Anchor the session to the project root so the script is location-independent.
 cd "$ROOT"
 
@@ -72,9 +88,51 @@ MODEL_ARGS=()
 
 milestone="$(jq -r '.active_milestone' "$STATE")"
 
+if [[ -n "$THROUGH" ]] && [[ "${THROUGH#M}" -lt "${milestone#M}" ]]; then
+  echo "ERROR: --through $THROUGH is before the active milestone $milestone." >&2
+  exit 1
+fi
+
+# Next milestone (numeric order) that still has pending/in_progress work.
+next_milestone_after() {
+  local current="$1"
+  jq -r --arg cur "$current" '
+    [ .features[]
+      | select(.status == "pending" or .status == "in_progress")
+      | .milestone ]
+    | unique
+    | map(select((ltrimstr("M") | tonumber) > ($cur | ltrimstr("M") | tonumber)))
+    | sort_by(ltrimstr("M") | tonumber)
+    | first // empty
+  ' "$STATE"
+}
+
+milestone_has_open() {
+  local m="$1"
+  jq -r --arg m "$m" '[.features[] | select(.milestone == $m and (.status != "done" and .status != "skipped"))] | length' "$STATE"
+}
+
+# A feature that may never be auto-approved: constitution bootstrap/amendments
+# (explicit owner ratification) or owner_pass_required (e.g. health/finance).
+feature_requires_explicit_owner_action() {
+  local id="$1"
+  jq -r --arg id "$id" '
+    (.bootstrap.constitution_amendments // []) as $amend
+    | (.bootstrap.constitution.feature // empty) as $boot
+    | ([$amend[].feature, $boot] + [.features[] | select(.owner_pass_required == true) | .id]) as $gated
+    | ($gated | index($id)) != null
+  ' "$STATE"
+}
+
 if [[ -z "$MAX_ITERATIONS" ]]; then
-  pending="$(jq --arg m "$milestone" '[.features[] | select(.milestone == $m and (.status == "pending" or .status == "in_progress"))] | length' "$STATE")"
-  MAX_ITERATIONS=$(( (pending + 1) * 3 ))
+  if [[ "$ADVANCE_MILESTONE" == true ]]; then
+    open="$(jq -r '[.features[] | select(.status == "pending" or .status == "in_progress")] | length' "$STATE")"
+    open_milestones="$(jq -r '[.features[] | select(.status == "pending" or .status == "in_progress") | .milestone] | unique | length' "$STATE")"
+    MAX_ITERATIONS=$(( (open + open_milestones + 1) * 3 ))
+  else
+    pending="$(jq --arg m "$milestone" '[.features[] | select(.milestone == $m and (.status == "pending" or .status == "in_progress"))] | length' "$STATE")"
+    MAX_ITERATIONS=$(( (pending + 1) * 3 ))
+  fi
   [[ "$MAX_ITERATIONS" -lt 3 ]] && MAX_ITERATIONS=3
 fi
 
@@ -95,12 +153,23 @@ build_message() {
     base="Run roadmap feature $FEATURE through the full loop. $base"
   fi
   if [[ "$AUTO_CHECKPOINT" == true ]]; then
-    base="$base AUTO_CHECKPOINT: the owner pre-approved feature checkpoints for this unattended run — approve each completed feature (commit, mark done) and continue until the milestone completes or something blocks."
+    base="$base AUTO_CHECKPOINT: the owner pre-approved feature checkpoints for this unattended run — approve each completed feature (commit, mark done) and continue until the milestone completes or something blocks. Two exceptions always stop for explicit owner action even with this marker: (a) a feature in bootstrap.constitution_amendments (explicit ratification required at its checkpoint), and (b) a feature with owner_pass_required:true in the state file. At those, create the checkpoint and stop with LOOP: CHECKPOINT <id>."
+  fi
+  if [[ "$ADVANCE_MILESTONE" == true ]]; then
+    local next_m="" open_count="" extra=""
+    next_m="$(next_milestone_after "$milestone")"
+    open_count="$(milestone_has_open "$milestone")"
+    [[ -n "$THROUGH" ]] && extra=" Stop after milestone $THROUGH completes."
+    if [[ "$open_count" -eq 0 && -n "$next_m" ]]; then
+      base="The active milestone $milestone has no open features. Owner pre-approved milestone advance for this run (scripts/loop.sh --advance-milestone): set active_milestone to $next_m in .sdd-toolbox/roadmap.json, record the switch in owner_decisions and the journal, then continue with the next eligible feature in $next_m. $base"
+    fi
+    base="$base MILESTONE-ADVANCE (owner pre-approved via scripts/loop.sh --advance-milestone): when the active milestone has no open features, activate the next milestone in numeric order with pending features (next candidate: ${next_m:-none}); record the switch in owner_decisions and the journal, then continue.$extra Never auto-approve a checkpoint that requires explicit owner action (constitution ratification, owner_pass_required) — stop and print LOOP: CHECKPOINT."
   fi
   printf '%s' "$base"
 }
 
 echo "== roadmap loop ==" | tee "$LOG"
+echo "mode: auto-checkpoint=$AUTO_CHECKPOINT advance-milestone=$ADVANCE_MILESTONE through=${THROUGH:-none}" | tee -a "$LOG"
 status_summary | tee -a "$LOG"
 echo "log: $LOG" | tee -a "$LOG"
 
@@ -108,6 +177,7 @@ last_hash=""
 iteration=0
 while [[ "$iteration" -lt "$MAX_ITERATIONS" ]]; do
   iteration=$((iteration + 1))
+  milestone="$(jq -r '.active_milestone' "$STATE")"
   message="$(build_message)"
   APPROVE="" # one-shot: an approval applies to exactly one iteration
 
@@ -118,11 +188,10 @@ while [[ "$iteration" -lt "$MAX_ITERATIONS" ]]; do
     echo "would run: opencode run --agent $AGENT --auto ${MODEL_ARGS[*]:-} \"$message\"" | tee -a "$LOG"
     exit 0
   else
-    continue_flag=()
-    [[ "$iteration" -gt 1 ]] && continue_flag=(--continue)
-    opencode run --agent "$AGENT" --auto "${continue_flag[@]}" "${MODEL_ARGS[@]}" --title "roadmap-loop $STAMP" "$message" 2>&1 | tee -a "$LOG"
+    opencode run --agent "$AGENT" --auto "${MODEL_ARGS[@]}" --title "roadmap-loop $STAMP #$iteration" "$message" 2>&1 | tee -a "$LOG"
   fi
 
+  milestone="$(jq -r '.active_milestone' "$STATE")"
   awaiting="$(jq -r '[.features[] | select(.status == "awaiting_approval")] | length' "$STATE")"
   blocked="$(jq -r '[.features[] | select(.status == "blocked")] | length' "$STATE")"
   active_open="$(jq -r --arg m "$milestone" '[.features[] | select(.milestone == $m and (.status != "done" and .status != "skipped"))] | length' "$STATE")"
@@ -133,12 +202,17 @@ while [[ "$iteration" -lt "$MAX_ITERATIONS" ]]; do
   if [[ "$awaiting" -gt 0 ]]; then
     feature_id="$(jq -r '[.features[] | select(.status == "awaiting_approval")][0].id' "$STATE")"
     if [[ "$AUTO_CHECKPOINT" == true ]]; then
+      if [[ "$(feature_requires_explicit_owner_action "$feature_id")" == "true" ]]; then
+        echo "LOOP: CHECKPOINT $feature_id — explicit owner action required (constitution ratification / owner-pass); not auto-approving" | tee -a "$LOG"
+        echo "Approve with: scripts/loop.sh --approve $feature_id   (or /roadmap approve $feature_id)" | tee -a "$LOG"
+        exit 2
+      fi
       echo "LOOP: CHECKPOINT $feature_id — auto-approved, committing and continuing" | tee -a "$LOG"
       APPROVE="$feature_id"
       continue
     fi
     echo "LOOP: CHECKPOINT $feature_id" | tee -a "$LOG"
-    echo "Approve with: scripts/loop.sh --approve $feature_id   (or /roadmap approve $feature_id)"
+    echo "Approve with: scripts/loop.sh --approve $feature_id   (or /roadmap approve $feature_id)" | tee -a "$LOG"
     exit 2
   fi
 
@@ -146,11 +220,26 @@ while [[ "$iteration" -lt "$MAX_ITERATIONS" ]]; do
     feature_id="$(jq -r '[.features[] | select(.status == "blocked")][0].id' "$STATE")"
     reason="$(jq -r '[.features[] | select(.status == "blocked")][0].blocker.reason // "unknown"' "$STATE")"
     echo "LOOP: BLOCKED $feature_id — $reason" | tee -a "$LOG"
-    echo "Resolve with: /roadmap status  (interactive), then rerun scripts/loop.sh --feature $feature_id"
+    echo "Resolve with: /roadmap status  (interactive), then rerun scripts/loop.sh --feature $feature_id" | tee -a "$LOG"
     exit 3
   fi
 
   if [[ "$active_open" -eq 0 ]]; then
+    if [[ "$ADVANCE_MILESTONE" == true ]]; then
+      if [[ -n "$THROUGH" ]] && [[ "${milestone#M}" -ge "${THROUGH#M}" ]]; then
+        echo "LOOP: MILESTONE $milestone DONE" | tee -a "$LOG"
+        echo "LOOP: THROUGH $THROUGH REACHED" | tee -a "$LOG"
+        exit 0
+      fi
+      next_m="$(next_milestone_after "$milestone")"
+      if [[ -z "$next_m" ]]; then
+        echo "LOOP: MILESTONE $milestone DONE" | tee -a "$LOG"
+        echo "LOOP: ALL MILESTONES DONE" | tee -a "$LOG"
+        exit 0
+      fi
+      echo "LOOP: MILESTONE $milestone DONE — advancing to $next_m" | tee -a "$LOG"
+      continue
+    fi
     echo "LOOP: MILESTONE $milestone DONE" | tee -a "$LOG"
     exit 0
   fi

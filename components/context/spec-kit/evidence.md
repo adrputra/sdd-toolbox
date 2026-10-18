@@ -27,6 +27,7 @@ If you did not verify it, say so explicitly.
 | Tests pass | the exact command + the summary line (pass/fail counts) |
 | Phase artifact authored | the artifact path + a read of the relevant section |
 | Bug fixed | the failing-before evidence + passing-after test output |
+| UI work verified | desktop + mobile screenshots, detector output, and the exact a11y/perf gate commands under `.visual-qa/`, with a `VisualQA` verdict |
 
 Evidence is captured at the moment of the claim, not reconstructed later.
 
