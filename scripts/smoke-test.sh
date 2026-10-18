@@ -105,7 +105,7 @@ for f in .sdd-toolbox/manifest.json .sdd-toolbox/config.json \
          .opencode/context/core/standards/code-quality.md; do
     [[ -f "$T1/$f" ]] && ok "present $f" || bad "present $f"
 done
-jq -e '.profile == "minimal" and .pins.oac == "0.5.2"' "$T1/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
+jq -e --arg oac "$OAC_VERSION" '.profile == "minimal" and .pins.oac == $oac' "$T1/.sdd-toolbox/manifest.json" >/dev/null 2>&1 \
     && ok "manifest profile + OAC pin" || bad "manifest profile + OAC pin"
 [[ -f "$T1/opencode.json" ]] && ok "opencode.json created" || bad "opencode.json created"
 jq -e '.mcp.context7.url == "https://mcp.context7.com/mcp" and .mcp.context7.enabled == true' "$T1/opencode.json" >/dev/null 2>&1 \

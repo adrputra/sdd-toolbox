@@ -14,14 +14,17 @@
     "subagent:task-manager",
     "subagent:coder-agent",
     "subagent:batch-executor",
-    "subagent:test-engineer",
+    "subagent:tester",
     "subagent:documentation",
     "context:code-quality"
   ],
   "settings": {
     "wave_strategy": "auto",
     "parallel_threshold": 5,
-    "validation": { "commands": [], "scope": "repo" },
+    "validation": {
+      "commands": [],
+      "scope": "repo"
+    },
     "converge_loop": true
   }
 }

@@ -1,73 +1,67 @@
 {
-  "version": "0.5.2",
-  "provenance": "shipgo-backend-go/.opencode snapshot (OAC registry context v0.5.2), 2026-09-19; model pins normalized to deepseek/deepseek-flash (V4.1 Flash) on 2026-09-19",
+  "version": "0.7.1",
+  "provenance": "github.com/darrenhinde/OpenAgentsControl@v0.7.1 (MIT), 2026-10-18; custom batch-executor retained separately",
   "generated_by": "scripts/vendor-sync.sh",
   "files": [
     {
       "path": ".opencode/agent/core/openagent.md",
       "id": "openagent",
       "type": "agent",
-      "sha256": "1d567e6d2c7bec7eba8323cf7c7283f653a72d5cbef1d96b53b85d86bffc481a"
+      "sha256": "1891a546bd3031722f6a45ae1e17b120266c628b06b155d2ad270f7df14e0d43"
     },
     {
       "path": ".opencode/agent/core/opencoder.md",
       "id": "opencoder",
       "type": "agent",
-      "sha256": "980be9eabd6f522352e89c93751bfcdb9de84fdd0ed0b379127eefd59848f885"
+      "sha256": "2ca40e022e7aadec85c71c9ff9d7f4f1e9fd1e612401412ec060f09e7e4abdcc"
     },
     {
       "path": ".opencode/agent/subagents/code/coder-agent.md",
       "id": "coder-agent",
       "type": "subagent",
-      "sha256": "ca5ae658e3a23c032b45a86fa8c30288a4e5b67674a7563fe3c5cfec7dc3ddf9"
+      "sha256": "e84cfb0c68d626986677a5c5718347d5e10925227a455b6f3cfb21486600c5d1"
     },
     {
       "path": ".opencode/agent/subagents/code/build-agent.md",
       "id": "build-agent",
       "type": "subagent",
-      "sha256": "77fd0626eb94dd16bf3aa1cabeac9eb9dde3f23ad4e2cb3f759c5eae7bb1d5ae"
+      "sha256": "7087d2206adbd9d9f1f1a2edee182d61e34dc0299a4db9c2ffa44ecb3e6fcb95"
     },
     {
-      "path": ".opencode/agent/subagents/code/test-engineer.md",
-      "id": "test-engineer",
+      "path": ".opencode/agent/subagents/code/tester.md",
+      "id": "tester",
       "type": "subagent",
-      "sha256": "5de030ce4f7b677bf903328479b38f8faf43956475fe106f75e630bb8ba5f76d"
+      "sha256": "2e8e9b723ec47c322d48d01324fde721431dd264bb80547352b6177387739724"
     },
     {
       "path": ".opencode/agent/subagents/code/reviewer.md",
       "id": "reviewer",
       "type": "subagent",
-      "sha256": "4549dbb22d2f67fcaa9b8915759d1a01c734a8630e2b5db83d41906b7c72f5d7"
-    },
-    {
-      "path": ".opencode/agent/subagents/core/batch-executor.md",
-      "id": "batch-executor",
-      "type": "subagent",
-      "sha256": "aebef03f2dd9942c1bdd22e4acfaf4801ae5e15160aecd26219d8303287300c7"
+      "sha256": "6778680bece095aee88a9e8791346849fa386bb3658cb6beb2e0a82a31cd6e4f"
     },
     {
       "path": ".opencode/agent/subagents/core/contextscout.md",
       "id": "contextscout",
       "type": "subagent",
-      "sha256": "90726490ded7ab238f50d316e28a532f0bed298671e8fde0de46b00fd9e0ae4a"
+      "sha256": "07c53321b379bbc730232017ac1a3b9ccea7caa04813b7ef8360a8ad2cf2defe"
     },
     {
       "path": ".opencode/agent/subagents/core/task-manager.md",
       "id": "task-manager",
       "type": "subagent",
-      "sha256": "3123f15f321f6dc81b63a446bf52ce49b3472b3882d06e2fd3f19fe607c4669a"
+      "sha256": "c7ad82a49c4b11d4a4b196c36c48c42129e7c7faffd42c34c3bbad9afc2a03b5"
     },
     {
       "path": ".opencode/agent/subagents/core/externalscout.md",
       "id": "externalscout",
       "type": "subagent",
-      "sha256": "9a20a30a64ceeb770aaf9964c03a572f2936ab4ac21eff507a6ef406aef35792"
+      "sha256": "db49de7dd34025da36040dd29dac2d2203fdb660ebac793814757542ef2bf279"
     },
     {
       "path": ".opencode/agent/subagents/core/documentation.md",
       "id": "documentation",
       "type": "subagent",
-      "sha256": "62175762c30726c29a7893dd495d637ee3a1f67c1eb7ae0844a521ff0ccbe1a0"
+      "sha256": "7c4fae60dec9de93f500e7ba83b27e8e0e2fccd5572b7c1632a046547788e888"
     },
     {
       "path": ".opencode/context/core/standards/code-quality.md",
@@ -80,18 +74,6 @@
       "id": "test-coverage",
       "type": "context",
       "sha256": "6455cd0ccdf46c59d24180805c925527030394e35bbf1ba2e73ce8288c01f1a5"
-    },
-    {
-      "path": ".opencode/context/core/workflows/task-delegation-basics.md",
-      "id": "task-delegation-basics",
-      "type": "context",
-      "sha256": "827dbc7ff31108641e2c921d83623e063d90badcf7bd1787a5307182204495eb"
-    },
-    {
-      "path": ".opencode/context/core/workflows/task-delegation-specialists.md",
-      "id": "task-delegation-specialists",
-      "type": "context",
-      "sha256": "2731e180016cbeb1cb13c13e6030f58e0814352da0298203575ac559d8fdecb9"
     }
   ]
 }

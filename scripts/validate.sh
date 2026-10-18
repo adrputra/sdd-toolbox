@@ -78,7 +78,7 @@ driver_subagent_id() {
         TaskManager)   printf 'task-manager\n' ;;
         CoderAgent)    printf 'coder-agent\n' ;;
         BatchExecutor) printf 'batch-executor\n' ;;
-        TestEngineer)  printf 'test-engineer\n' ;;
+        TestEngineer)  printf 'tester\n' ;;
         DocWriter)     printf 'documentation\n' ;;
         VisualQA)      printf 'visual-qa-gate\n' ;;
         *)             printf '\n' ;;
@@ -248,7 +248,7 @@ else
         fi
     done <<< "$names"
 fi
-for id in contextscout externalscout task-manager coder-agent batch-executor test-engineer documentation; do
+for id in contextscout externalscout task-manager coder-agent tester documentation; do
     if jq -e --arg i "$id" '[.files[] | select(.id == $i and .type == "subagent")] | length > 0' "$BUNDLE" >/dev/null 2>&1; then
         pass "expected subagent vendored: $id"
     else

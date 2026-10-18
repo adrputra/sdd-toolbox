@@ -8,8 +8,8 @@
 # This is the driver-needed subset: the primary agents, the subagents the
 # spec-kit-driver delegates to, and the context files the driver references.
 #
-# NOTE: validated against the OAC source tree at snapshot time (v0.5.2,
-# 2026-09-19). Adjust here and re-run vendor-sync if a future source layout
+# NOTE: validated against the OAC source tree at snapshot time (v0.7.1,
+# 2026-10-18). Adjust here and re-run vendor-sync if a future source layout
 # differs.
 # =============================================================================
 
@@ -20,11 +20,10 @@ agent/core/opencoder.md
 # --- code subagents -----------------------------------------------------------
 agent/subagents/code/coder-agent.md
 agent/subagents/code/build-agent.md
-agent/subagents/code/test-engineer.md
+agent/subagents/code/tester.md
 agent/subagents/code/reviewer.md
 
 # --- core subagents -----------------------------------------------------------
-agent/subagents/core/batch-executor.md
 agent/subagents/core/contextscout.md
 agent/subagents/core/task-manager.md
 agent/subagents/core/externalscout.md
@@ -33,7 +32,3 @@ agent/subagents/core/documentation.md
 # --- context: standards -------------------------------------------------------
 context/core/standards/code-quality.md
 context/core/standards/test-coverage.md
-
-# --- context: workflows -------------------------------------------------------
-context/core/workflows/task-delegation-basics.md
-context/core/workflows/task-delegation-specialists.md

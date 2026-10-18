@@ -14,7 +14,7 @@
     "subagent:task-manager",
     "subagent:coder-agent",
     "subagent:batch-executor",
-    "subagent:test-engineer",
+    "subagent:tester",
     "subagent:documentation",
     "context:code-quality",
     "subagent:reviewer",
@@ -24,7 +24,13 @@
   "settings": {
     "wave_strategy": "auto",
     "parallel_threshold": 5,
-    "validation": { "commands": ["go vet ./...", "go test -race -count=1 ./..."], "scope": "repo" },
+    "validation": {
+      "commands": [
+        "go vet ./...",
+        "go test -race -count=1 ./..."
+      ],
+      "scope": "repo"
+    },
     "converge_loop": true
   }
 }
